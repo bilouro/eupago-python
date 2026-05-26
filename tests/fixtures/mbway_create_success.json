@@ -1,0 +1,7 @@
+{
+  "transactionID": "txn-abc-123",
+  "estado": 0,
+  "resposta": "OK",
+  "valor": 49.90,
+  "referencia": "REF-001"
+}
