@@ -11,6 +11,7 @@ from eupago._config import (
 )
 from eupago._http import AuditHook, HttpTransport
 from eupago.services.mbway import MBWayService
+from eupago.services.multibanco import MultibancoService
 
 
 class EupagoClient:
@@ -50,6 +51,10 @@ class EupagoClient:
     @property
     def mbway(self) -> MBWayService:
         return self._get_service("mbway", MBWayService)  # type: ignore[no-any-return]
+
+    @property
+    def multibanco(self) -> MultibancoService:
+        return self._get_service("multibanco", MultibancoService)  # type: ignore[no-any-return]
 
     def set_audit_hook(self, hook: AuditHook | None) -> None:
         self._transport.set_audit_hook(hook)
