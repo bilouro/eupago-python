@@ -10,6 +10,8 @@ from eupago._config import (
     SANDBOX_BASE_URL,
 )
 from eupago._http import AuditHook, HttpTransport
+from eupago.services.apple_pay import ApplePayService
+from eupago.services.google_pay import GooglePayService
 from eupago.services.mbway import MBWayService
 from eupago.services.multibanco import MultibancoService
 
@@ -55,6 +57,14 @@ class EupagoClient:
     @property
     def multibanco(self) -> MultibancoService:
         return self._get_service("multibanco", MultibancoService)  # type: ignore[no-any-return]
+
+    @property
+    def apple_pay(self) -> ApplePayService:
+        return self._get_service("apple_pay", ApplePayService)  # type: ignore[no-any-return]
+
+    @property
+    def google_pay(self) -> GooglePayService:
+        return self._get_service("google_pay", GooglePayService)  # type: ignore[no-any-return]
 
     def set_audit_hook(self, hook: AuditHook | None) -> None:
         self._transport.set_audit_hook(hook)
