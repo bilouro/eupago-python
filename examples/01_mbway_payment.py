@@ -24,10 +24,8 @@ payment = client.mbway.create_payment(
     order_id="ORD-2026-001",
     amount=Decimal("49.90"),
     phone_number="351#912345678",  # Formato: 351#9XXXXXXXX
-    # Opcional:
-    description="Encomenda #001",
-    callback_url="https://a-tua-app.pt/webhooks/eupago",
-    customer=Customer(email="cliente@email.com"),
+    description="Encomenda #001",        # Opcional
+    customer=Customer(email="cliente@email.com"),  # Opcional
 )
 
 print(f"Transaction ID: {payment.transaction_id}")
