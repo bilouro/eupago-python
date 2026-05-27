@@ -191,6 +191,29 @@ Mapping is in `models/payment.py` — `normalize_status()` and `normalize_method
 
 Every `PaymentResult` includes `raw_response: dict` — the unparsed JSON from eupago. This is the escape hatch for fields the SDK doesn't model yet. Never remove this.
 
+### R10: Examples Show the Recommended Path, Not Every Parameter
+
+"The API supports it" ≠ "the example should show it."
+
+Examples must show what a developer would do in a **real app** — the simplest, most correct path. Advanced/optional parameters go in a separate "Advanced" section or in the API reference, not in the main example.
+
+Checklist before writing an example:
+1. Remove every parameter that has a sensible default or is configured elsewhere (e.g., webhooks in backoffice)
+2. Add inline comments explaining **what each parameter does**, not just its name
+3. Read the example as a developer seeing the SDK for the first time — is it clear?
+4. Compare with how Stripe/Mollie examples present the same flow
+
+Concrete rule: `callback_url` is configured once in the eupago backoffice, not per-payment. Never show it in basic examples. `success_url`/`error_url` ARE per-payment (browser redirects) and should be shown.
+
+### R11: Research UX, Not Just API
+
+Before implementing a feature, study how **top SDKs present that feature to developers**, not just the raw API endpoints. The API tells you what's possible; the best SDKs tell you what's recommended.
+
+For each new feature, check:
+1. How does Stripe handle this? (stripe.com/docs)
+2. What does the developer journey look like? (setup → first call → webhook → done)
+3. Which parameters are "configure once" vs "pass every time"?
+
 ---
 
 ## How to Add a New Payment Method
