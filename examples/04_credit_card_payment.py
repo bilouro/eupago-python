@@ -22,10 +22,9 @@ client = EupagoClient(api_key="xxxx-xxxx-xxxx-xxxx-xxxx", sandbox=True)
 payment = client.credit_card.create_payment(
     order_id="ORD-2026-004",
     amount=Decimal("99.99"),             # Máximo: 3.999 EUR
-    success_url="https://loja.pt/pagamento/ok",
-    error_url="https://loja.pt/pagamento/erro",
-    cancel_url="https://loja.pt/pagamento/cancelado",
-    callback_url="https://loja.pt/webhooks/eupago",
+    success_url="https://loja.pt/pagamento/ok",       # Cliente vai aqui após pagar
+    error_url="https://loja.pt/pagamento/erro",       # Cliente vai aqui se falhar
+    cancel_url="https://loja.pt/pagamento/cancelado",  # Cliente vai aqui se cancelar
     description="Plano Premium",
     language="PT",                       # PT, EN, ES, FR
     customer=Customer(email="cliente@email.com"),
