@@ -5,9 +5,12 @@
 [![CI](https://github.com/bilouro/eupago-python/actions/workflows/test.yml/badge.svg)](https://github.com/bilouro/eupago-python/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Typed](https://img.shields.io/badge/typed-mypy--strict-blue)](https://mypy.readthedocs.io/)
+[![Docs](https://img.shields.io/badge/docs-bilouro.github.io-blue)](https://bilouro.github.io/eupago-python/)
 
 The first Python SDK for [eupago](https://www.eupago.com), Portugal's payment gateway.
 Multibanco, MB WAY, Credit Card, Apple Pay, Google Pay, and more — in 5 lines of Python.
+
+**[Documentation (PT/EN)](https://bilouro.github.io/eupago-python/)** | [Examples](examples/) | [API Reference](https://bilouro.github.io/eupago-python/api/)
 
 > **Community SDK** — not affiliated with or endorsed by eupago.
 > For official integrations, visit [eupago.com](https://www.eupago.com/integrations/api-payment-gateway).
