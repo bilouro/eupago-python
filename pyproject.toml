@@ -37,7 +37,7 @@ dev = [
     "pre-commit>=3.0",
     "bandit>=1.7",
 ]
-docs = ["mkdocs-material", "mkdocstrings[python]"]
+docs = ["mkdocs-material", "mkdocstrings[python]", "mkdocs-static-i18n"]
 
 [project.urls]
 Homepage = "https://github.com/bilouro/eupago-python"
