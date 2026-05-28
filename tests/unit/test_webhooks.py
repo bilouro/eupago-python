@@ -1,14 +1,33 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import json
+import os
 
 import pytest
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.padding import PKCS7
 
-from eupago.exceptions import SignatureError
+from eupago.exceptions import DecryptionError, SignatureError
 from eupago.models.payment import PaymentStatus
 from eupago.webhooks import parse_webhook
+
+
+def _sign(body: bytes, secret: str) -> str:
+    return hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+
+
+def _encrypt(plaintext: bytes, secret: str) -> tuple[str, str]:
+    """Mirror eupago's AES-256-CBC scheme: key = sha256(secret), random IV, PKCS7 pad."""
+    key = hashlib.sha256(secret.encode()).digest()
+    iv = os.urandom(16)
+    padder = PKCS7(128).padder()
+    padded = padder.update(plaintext) + padder.finalize()
+    encryptor = Cipher(algorithms.AES(key), modes.CBC(iv)).encryptor()
+    ciphertext = encryptor.update(padded) + encryptor.finalize()
+    return base64.b64encode(ciphertext).decode(), base64.b64encode(iv).decode()
 
 
 def test_parse_v1_webhook() -> None:
@@ -94,3 +113,97 @@ def test_parse_webhook_requires_body_or_params() -> None:
 
     with pytest.raises(WebhookError, match="body or query_params"):
         parse_webhook()
+
+
+def test_v2_webhook_encrypted_roundtrip() -> None:
+    secret = "aes-key-from-backoffice"
+    plaintext = json.dumps(
+        {
+            "transactions": {
+                "trid": 78901,
+                "identifier": "ORD-ENC-1",
+                "reference": 999888777,
+                "entity": 12345,
+                "method": "Mbway",
+                "amount": {"value": 49.90, "currency": "EUR"},
+                "status": "Paid",
+            }
+        }
+    ).encode()
+    ciphertext_b64, iv_b64 = _encrypt(plaintext, secret)
+    body = json.dumps({"data": ciphertext_b64}).encode()
+
+    event = parse_webhook(
+        body=body,
+        headers={
+            "X-Signature": _sign(body, secret),
+            "X-Initialization-Vector": iv_b64,
+        },
+        webhook_secret=secret,
+    )
+
+    assert event.order_id == "ORD-ENC-1"
+    assert event.transaction_id == "78901"
+    assert event.status == PaymentStatus.PAID
+    assert str(event.amount) == "49.9"
+    assert event.method == "mbway"
+
+
+def test_v2_webhook_invalid_ciphertext_raises() -> None:
+    secret = "aes-key"
+    iv_b64 = base64.b64encode(os.urandom(16)).decode()
+    # 7 bytes is not a multiple of the AES block size -> deterministic decrypt failure
+    bad_ciphertext = base64.b64encode(os.urandom(7)).decode()
+    body = json.dumps({"data": bad_ciphertext}).encode()
+
+    with pytest.raises(DecryptionError):
+        parse_webhook(
+            body=body,
+            headers={"X-Initialization-Vector": iv_b64},
+            webhook_secret=secret,
+        )
+
+
+@pytest.mark.parametrize(
+    ("raw_status", "expected"),
+    [
+        ("Paid", PaymentStatus.PAID),
+        ("Expired", PaymentStatus.EXPIRED),
+        ("Cancel", PaymentStatus.CANCELLED),
+        ("Refund", PaymentStatus.REFUNDED),
+        ("Error", PaymentStatus.ERROR),
+        ("desconhecido", PaymentStatus.PENDING),
+    ],
+)
+def test_v2_webhook_status_variants(raw_status: str, expected: PaymentStatus) -> None:
+    body = json.dumps({"transactions": {"trid": 1, "status": raw_status}}).encode()
+    event = parse_webhook(body=body)
+    assert event.status == expected
+
+
+def test_v2_webhook_amount_as_scalar() -> None:
+    body = json.dumps({"transactions": {"trid": 1, "status": "Paid", "amount": 12.5}}).encode()
+    event = parse_webhook(body=body)
+    assert str(event.amount) == "12.5"
+    assert event.currency == "EUR"
+
+
+def test_v2_webhook_minimal_fields() -> None:
+    body = json.dumps({"transactions": {"trid": 1, "status": "Paid"}}).encode()
+    event = parse_webhook(body=body)
+    assert event.transaction_id == "1"
+    assert event.reference is None
+    assert event.entity is None
+    assert event.fee is None
+    assert event.channel is None
+    assert event.currency == "EUR"
+
+
+def test_parse_webhook_from_fixture(fixture_data) -> None:
+    body = json.dumps(fixture_data("webhook_v2_paid")).encode()
+    event = parse_webhook(body=body)
+    assert event.order_id == "ORD-2026-001"
+    assert event.transaction_id == "78901"
+    assert event.status == PaymentStatus.PAID
+    assert event.channel == "main-channel"
+    assert str(event.fee) == "0.35"

@@ -24,6 +24,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+crypto = ["cryptography>=42.0"]
 django = ["django>=4.0"]
 fastapi = ["fastapi>=0.100"]
 flask = ["flask>=2.0"]
@@ -36,6 +37,7 @@ dev = [
     "ruff>=0.4",
     "pre-commit>=3.0",
     "bandit>=1.7",
+    "cryptography>=42.0",
 ]
 docs = ["mkdocs-material", "mkdocstrings[python]", "mkdocs-static-i18n"]
 
