@@ -10,7 +10,7 @@
 | Apple Wallet | [Apple Pay](apple-pay.md) | Immediate | 99,999 EUR |
 | Google Wallet | [Google Pay](google-pay.md) | Immediate | 99,999 EUR |
 | Automatic monthly charges | [CC Subscription](credit-card.md#subscriptions) | Recurring | 3,999 EUR |
-| Reserve amount, charge later | [CC Auth + Capture](credit-card.md#auth--capture) | Flexible | 3,999 EUR |
+| Reserve amount, charge later | [CC Auth + Capture](credit-card.md#authorization-capture) | Flexible | 3,999 EUR |
 
 ## Compared flows
 
