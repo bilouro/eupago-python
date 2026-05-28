@@ -89,10 +89,21 @@ class HttpTransport:
             data = {}
 
         message = str(
-            data.get("message") or data.get("Message") or data.get("resposta") or response.text
+            data.get("message")
+            or data.get("Message")
+            or data.get("text")
+            or data.get("resposta")
+            or response.text
         )
         error_code_raw = data.get("code") or data.get("estado")
-        error_code = int(error_code_raw) if error_code_raw is not None else None
+        error_code: int | str | None
+        if error_code_raw is None:
+            error_code = None
+        else:
+            try:
+                error_code = int(error_code_raw)
+            except (ValueError, TypeError):
+                error_code = error_code_raw
 
         kwargs: dict[str, Any] = {
             "status_code": response.status_code,

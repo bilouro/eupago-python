@@ -20,6 +20,7 @@ def _build_request_body(
     amount: Decimal,
     phone_number: str,
     *,
+    currency: str = "EUR",
     customer: Customer | None = None,
     description: str | None = None,
     callback_url: str | None = None,
@@ -31,9 +32,9 @@ def _build_request_body(
         raise ValidationError("phone_number is required for MB WAY")
 
     payment: dict[str, Any] = {
-        "amount": float(amount),
+        "amount": {"value": float(amount), "currency": currency},
         "identifier": order_id,
-        "alias": phone_number,
+        "customerPhone": phone_number,
         "lang": language,
     }
     if description:
@@ -54,15 +55,20 @@ def _build_request_body(
     return body
 
 
+def _is_success(data: dict[str, Any]) -> bool:
+    return data.get("transactionStatus") == "Success" or data.get("estado") == 0
+
+
 def _parse_response(data: dict[str, Any], order_id: str, amount: Decimal) -> PaymentResult:
-    transaction_id = data.get("transactionID") or data.get("referencia")
-    status_raw = data.get("estado", 0)
-    status = PaymentStatus.PENDING if status_raw == 0 else PaymentStatus.ERROR
+    transaction_id = data.get("transactionID")
+    reference = data.get("reference")
+    status = PaymentStatus.PENDING if _is_success(data) else PaymentStatus.ERROR
 
     return PaymentResult(
         order_id=order_id,
         amount=amount,
-        transaction_id=str(transaction_id) if transaction_id else None,
+        transaction_id=str(transaction_id) if transaction_id is not None else None,
+        reference=str(reference) if reference is not None else None,
         status=status,
         method="mbway",
         raw_response=data,
@@ -76,6 +82,7 @@ class MBWayService(BaseService):
         amount: Decimal,
         phone_number: str,
         *,
+        currency: str = "EUR",
         customer: Customer | None = None,
         description: str | None = None,
         callback_url: str | None = None,
@@ -85,6 +92,7 @@ class MBWayService(BaseService):
             order_id,
             amount,
             phone_number,
+            currency=currency,
             customer=customer,
             description=description,
             callback_url=callback_url,
@@ -99,6 +107,7 @@ class MBWayService(BaseService):
         amount: Decimal,
         phone_number: str,
         *,
+        currency: str = "EUR",
         customer: Customer | None = None,
         description: str | None = None,
         callback_url: str | None = None,
@@ -108,6 +117,7 @@ class MBWayService(BaseService):
             order_id,
             amount,
             phone_number,
+            currency=currency,
             customer=customer,
             description=description,
             callback_url=callback_url,
@@ -122,11 +132,17 @@ class MBWayService(BaseService):
         amount: Decimal,
         phone_number: str,
         *,
+        currency: str = "EUR",
         customer: Customer | None = None,
         callback_url: str | None = None,
     ) -> PaymentResult:
         body = _build_request_body(
-            order_id, amount, phone_number, customer=customer, callback_url=callback_url
+            order_id,
+            amount,
+            phone_number,
+            currency=currency,
+            customer=customer,
+            callback_url=callback_url,
         )
         response = self._request("POST", _PATH_AUTHORIZE, json=body)
         return _parse_response(response.json(), order_id, amount)
@@ -137,11 +153,17 @@ class MBWayService(BaseService):
         amount: Decimal,
         phone_number: str,
         *,
+        currency: str = "EUR",
         customer: Customer | None = None,
         callback_url: str | None = None,
     ) -> PaymentResult:
         body = _build_request_body(
-            order_id, amount, phone_number, customer=customer, callback_url=callback_url
+            order_id,
+            amount,
+            phone_number,
+            currency=currency,
+            customer=customer,
+            callback_url=callback_url,
         )
         response = await self._request_async("POST", _PATH_AUTHORIZE, json=body)
         return _parse_response(response.json(), order_id, amount)
@@ -158,7 +180,7 @@ class MBWayService(BaseService):
         return PaymentResult(
             transaction_id=transaction_id,
             amount=amount,
-            status=PaymentStatus.PAID if data.get("estado", -1) == 0 else PaymentStatus.ERROR,
+            status=PaymentStatus.PAID if _is_success(data) else PaymentStatus.ERROR,
             method="mbway",
             raw_response=data,
         )
@@ -175,7 +197,7 @@ class MBWayService(BaseService):
         return PaymentResult(
             transaction_id=transaction_id,
             amount=amount,
-            status=PaymentStatus.PAID if data.get("estado", -1) == 0 else PaymentStatus.ERROR,
+            status=PaymentStatus.PAID if _is_success(data) else PaymentStatus.ERROR,
             method="mbway",
             raw_response=data,
         )

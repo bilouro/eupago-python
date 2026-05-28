@@ -1,5 +1,5 @@
 {
-  "transactionID": "txn-abc-123",
-  "estado": 0,
-  "resposta": "Captured"
+  "transactionStatus": "Success",
+  "transactionID": "019e6fb002bf7e4c8ebc6e47b6da2b2b",
+  "reference": "306188"
 }

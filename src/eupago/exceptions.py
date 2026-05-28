@@ -25,7 +25,7 @@ class ApiError(EupagoError):
         message: str,
         *,
         status_code: int | None = None,
-        error_code: int | None = None,
+        error_code: int | str | None = None,
         request_id: str | None = None,
     ) -> None:
         self.status_code = status_code

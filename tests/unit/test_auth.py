@@ -6,7 +6,7 @@ from eupago._auth import ApiKeyAuth
 def test_api_key_apply_header() -> None:
     auth = ApiKeyAuth("demo-1234-5678-9012-3456")
     headers = auth.apply_header({"Accept": "application/json"})
-    assert headers["ApiKey"] == "demo-1234-5678-9012-3456"
+    assert headers["Authorization"] == "ApiKey demo-1234-5678-9012-3456"
     assert headers["Accept"] == "application/json"
 
 

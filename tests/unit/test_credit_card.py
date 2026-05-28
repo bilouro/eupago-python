@@ -57,7 +57,7 @@ def test_create_payment_sends_header_auth(client: EupagoClient) -> None:
 
     client.credit_card.create_payment(order_id="ORD-CC-002", amount=Decimal("10.00"))
 
-    assert route.calls[0].request.headers["apikey"] == "test-0000-0000-0000-0000"
+    assert route.calls[0].request.headers["authorization"] == "ApiKey test-0000-0000-0000-0000"
 
 
 @respx.mock
