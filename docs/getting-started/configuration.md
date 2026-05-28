@@ -1,41 +1,41 @@
-# Configuração
+# Configuration
 
-## Opções do client
+## Client options
 
 ```python
 from eupago import EupagoClient
 
 client = EupagoClient(
-    api_key="xxxx-xxxx-xxxx-xxxx-xxxx",  # Obrigatório
-    sandbox=True,           # Ambiente sandbox (default: False)
-    timeout=10.0,           # Timeout em segundos (default: 10)
-    max_retries=3,          # Retries em GETs falhados (default: 3)
-    client_id="...",        # OAuth — para endpoints de gestão (opcional)
-    client_secret="...",    # OAuth — para endpoints de gestão (opcional)
+    api_key="xxxx-xxxx-xxxx-xxxx-xxxx",  # Required
+    sandbox=True,           # Sandbox environment (default: False)
+    timeout=10.0,           # Timeout in seconds (default: 10)
+    max_retries=3,          # Retries on failed GETs (default: 3)
+    client_id="...",        # OAuth — for management endpoints (optional)
+    client_secret="...",    # OAuth — for management endpoints (optional)
 )
 ```
 
-## Sandbox vs Produção
+## Sandbox vs Production
 
-| | Sandbox | Produção |
+| | Sandbox | Production |
 |---|---|---|
 | URL | `sandbox.eupago.pt` | `clientes.eupago.pt` |
-| Parâmetro | `sandbox=True` | `sandbox=False` (default) |
-| API Key | Key de teste | Key de produção |
-| Pagamentos | Simulados | Reais |
+| Parameter | `sandbox=True` | `sandbox=False` (default) |
+| API Key | Test key | Production key |
+| Payments | Simulated | Real |
 
-!!! tip "Usa sempre sandbox para desenvolvimento"
-    Nunca uses a API key de produção em desenvolvimento. Pede credenciais de sandbox ao suporte eupago: suporte@eupago.pt
+!!! tip "Always use sandbox for development"
+    Never use production API keys during development. Request sandbox credentials from eupago support: suporte@eupago.pt
 
 ## Retries
 
-O SDK faz retry automático com exponential backoff + jitter, mas **apenas em requests GET** (consultas de estado).
+The SDK automatically retries with exponential backoff + jitter, but **only on GET requests** (status queries).
 
-Requests **POST nunca fazem retry** — a eupago não suporta idempotency keys, e repetir um POST pode criar pagamentos duplicados.
+**POST requests never retry** — eupago doesn't support idempotency keys, and retrying a POST can create duplicate payments.
 
 ## Audit hook
 
-Regista cada chamada à API para logging, métricas ou debug:
+Log every API call for debugging, metrics, or auditing:
 
 ```python
 def log_api_call(request, response, duration_ms):
@@ -44,23 +44,23 @@ def log_api_call(request, response, duration_ms):
 client.set_audit_hook(log_api_call)
 ```
 
-## OAuth (endpoints de gestão)
+## OAuth (management endpoints)
 
-Para refunds, consulta de transações e payouts, a eupago requer OAuth 2.0:
+For refunds, transaction queries, and payouts, eupago requires OAuth 2.0:
 
 ```python
 client = EupagoClient(
     api_key="xxxx-xxxx-xxxx-xxxx-xxxx",
-    client_id="o-teu-client-id",
-    client_secret="o-teu-client-secret",
+    client_id="your-client-id",
+    client_secret="your-client-secret",
 )
 ```
 
-O SDK gere o token automaticamente — pede, guarda em cache, e renova quando expira.
+The SDK manages the token automatically — fetches, caches, and refreshes on expiry.
 
 ## Context manager
 
-O client suporta `with` (sync) e `async with` para limpar conexões:
+The client supports `with` (sync) and `async with` for connection cleanup:
 
 ```python
 # Sync

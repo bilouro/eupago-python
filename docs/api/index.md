@@ -1,6 +1,6 @@
-# Referencia API
+# API Reference
 
-Documentacao gerada automaticamente a partir do codigo-fonte.
+Automatically generated documentation from the source code.
 
 ## Client
 
@@ -11,7 +11,7 @@ Documentacao gerada automaticamente a partir do codigo-fonte.
       heading_level: 3
       members_order: source
 
-## Modelos
+## Models
 
 ### PaymentResult
 
@@ -49,7 +49,7 @@ Documentacao gerada automaticamente a partir do codigo-fonte.
       heading_level: 4
       members_order: source
 
-## Excepcoes
+## Exceptions
 
 ::: eupago.exceptions
     options:

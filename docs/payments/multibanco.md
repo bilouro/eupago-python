@@ -1,209 +1,153 @@
 # Multibanco
 
-## O que e
+## What it is
 
-Multibanco e o sistema de pagamentos interbancario portugues. Este metodo gera uma **entidade** e **referencia** que o cliente pode usar para pagar em caixas ATM ou atraves de homebanking. A referencia e valida ate a data de expiracao configurada.
+Multibanco is Portugal's national ATM and online banking network. When a payment reference is generated, the customer receives an **entity number** and a **reference number** that they can use to pay at any ATM, through online banking, or via a banking app. This is an offline payment method -- the customer pays at their own convenience within the configured time window.
 
-- **Montante maximo:** 99.999 EUR
-- **Validade:** Configuravel via `expires_at`
-- **Tipo:** Pagamento offline (ATM) ou online (homebanking)
+Multibanco supports configurable expiration dates, minimum/maximum amounts, duplicate reference control, and expiry reminders.
 
-## Diagrama de fluxo
+The maximum amount per reference is **99,999 EUR**.
+
+## Flow diagram
 
 ```mermaid
 sequenceDiagram
-    participant Comerciante
-    participant EupagoSDK
-    participant EupagoAPI
-    participant Multibanco
-    participant Cliente
+    participant Merchant
+    participant EupagoAPI as Eupago API
+    participant Customer
+    participant Bank as ATM / Online Banking
 
-    Comerciante->>EupagoSDK: create_reference(amount, ...)
-    EupagoSDK->>EupagoAPI: POST /api/v1.02/multibanco/create
-    EupagoAPI-->>EupagoSDK: entidade + referencia
-    EupagoSDK-->>Comerciante: MultibancoResponse
-
-    Comerciante->>Cliente: Apresentar entidade + referencia
-
-    alt Pagamento via ATM
-        Cliente->>Multibanco: Pagar em caixa ATM
-    else Pagamento via homebanking
-        Cliente->>Multibanco: Pagar online
-    end
-
-    Multibanco->>EupagoAPI: Confirmacao de pagamento
-    EupagoAPI->>Comerciante: Callback (pago)
-
-    note over Comerciante: Opcional
-    Comerciante->>EupagoSDK: get_info(reference)
-    EupagoSDK->>EupagoAPI: GET /api/v1.02/multibanco/info
-    EupagoAPI-->>EupagoSDK: detalhes da referencia
-    EupagoSDK-->>Comerciante: MultibancoInfoResponse
+    Merchant->>EupagoAPI: create_reference(amount, ...)
+    EupagoAPI-->>Merchant: entity, reference, amount
+    Merchant->>Customer: Display entity + reference + amount
+    Customer->>Bank: Pay using entity + reference
+    Bank->>EupagoAPI: Payment confirmation
+    EupagoAPI->>Merchant: Callback (payment confirmed)
 ```
 
-## Exemplo completo
+## Full example
+
+### Create a reference
 
 ```python
 from decimal import Decimal
-from datetime import datetime, timedelta
 from eupago import EupagoClient
 
-client = EupagoClient(
-    api_key="demo-api-key",
-    sandbox=True,
-)
+client = EupagoClient(api_key="your-api-key")
 
-# Criar referencia Multibanco
 response = client.multibanco.create_reference(
-    amount=Decimal("150.00"),
-    transaction_key="order-12345",
-    starts_at=datetime.now(),
-    expires_at=datetime.now() + timedelta(days=7),
-    allow_duplicate=False,
-    min_amount=Decimal("100.00"),
-    max_amount=Decimal("200.00"),
-    send_expiry_reminder=True,
+    amount=Decimal("49.99"),
+    currency="EUR",
+    order_id="order-3001",
     callback_url="https://example.com/callback",
+    expires_at="2026-06-15T23:59:59Z",
+    starts_at="2026-06-01T00:00:00Z",
+    allow_duplicate=False,
+    min_amount=Decimal("10.00"),
+    max_amount=Decimal("100.00"),
+    send_expiry_reminder=True,
 )
 
-print(f"Entidade: {response.entity}")
-print(f"Referencia: {response.reference}")
-print(f"Montante: {response.amount} EUR")
-print(f"Estado: {response.status}")
-
-# Consultar informacao de uma referencia
-info = client.multibanco.get_info(
-    reference=response.reference,
-    entity=response.entity,
-)
-
-print(f"Estado do pagamento: {info.payment_status}")
-print(f"Data de criacao: {info.created_at}")
-print(f"Data de expiracao: {info.expires_at}")
+print(response.entity)     # "11687"
+print(response.reference)  # "123 456 789"
+print(response.amount)     # Decimal("49.99")
 ```
 
-## Parametros
+### Get reference info
+
+```python
+from eupago import EupagoClient
+
+client = EupagoClient(api_key="your-api-key")
+
+info = client.multibanco.get_info(reference="123456789")
+
+print(info.status)      # "pending" | "paid" | "expired"
+print(info.amount)      # Decimal("49.99")
+print(info.entity)      # "11687"
+print(info.paid_at)     # datetime or None
+```
+
+## Parameters
 
 ### `create_reference`
 
-| Parametro             | Tipo       | Obrigatorio | Descricao                                                            |
-| --------------------- | ---------- | ----------- | -------------------------------------------------------------------- |
-| `amount`              | `Decimal`  | Sim         | Montante a cobrar (max: 99.999 EUR)                                  |
-| `transaction_key`     | `str`      | Sim         | Identificador unico da transacao no sistema do comerciante           |
-| `starts_at`           | `datetime` | Nao         | Data a partir da qual a referencia fica ativa                        |
-| `expires_at`          | `datetime` | Nao         | Data de expiracao da referencia                                      |
-| `allow_duplicate`     | `bool`     | Nao         | Permitir pagamentos duplicados com a mesma referencia                |
-| `min_amount`          | `Decimal`  | Nao         | Montante minimo aceite para pagamento                                |
-| `max_amount`          | `Decimal`  | Nao         | Montante maximo aceite para pagamento                                |
-| `send_expiry_reminder`| `bool`     | Nao         | Enviar lembrete antes da referencia expirar                          |
-| `callback_url`        | `str`      | Nao         | URL para receber notificacoes de estado do pagamento                 |
-| `description`         | `str`      | Nao         | Descricao do pagamento                                               |
+| Parameter             | Type      | Required | Description                                                                 |
+|-----------------------|-----------|----------|-----------------------------------------------------------------------------|
+| `amount`              | `Decimal` | Yes      | Amount for the reference (max 99,999 EUR)                                   |
+| `currency`            | `str`     | No       | ISO 4217 currency code. Default: `"EUR"`                                    |
+| `order_id`            | `str`     | No       | Your internal order identifier                                              |
+| `callback_url`        | `str`     | No       | URL to receive the payment confirmation notification                        |
+| `expires_at`          | `str`     | No       | ISO 8601 datetime after which the reference can no longer be paid           |
+| `starts_at`           | `str`     | No       | ISO 8601 datetime before which the reference cannot be paid                 |
+| `allow_duplicate`     | `bool`    | No       | Whether to allow multiple payments on the same reference. Default: `False`  |
+| `min_amount`          | `Decimal` | No       | Minimum amount accepted for payment (for open-amount references)            |
+| `max_amount`          | `Decimal` | No       | Maximum amount accepted for payment (for open-amount references)            |
+| `send_expiry_reminder`| `bool`    | No       | Send a reminder notification before the reference expires. Default: `False` |
 
 ### `get_info`
 
-| Parametro   | Tipo  | Obrigatorio | Descricao                                      |
-| ----------- | ----- | ----------- | ---------------------------------------------- |
-| `reference` | `str` | Sim         | Referencia Multibanco gerada                   |
-| `entity`    | `str` | Sim         | Entidade Multibanco associada                  |
+| Parameter   | Type  | Required | Description                           |
+|-------------|-------|----------|---------------------------------------|
+| `reference` | `str` | Yes      | The Multibanco reference to look up   |
 
-## Resposta
+## Response
 
-### Resposta de `create_reference`
+### `create_reference` response
 
-```python
-{
-    "status": "ok",
-    "entity": "10611",
-    "reference": "123 456 789",
-    "amount": "150.00",
-    "currency": "EUR",
-    "starts_at": "2026-05-27T00:00:00Z",
-    "expires_at": "2026-06-03T00:00:00Z",
-    "allow_duplicate": False,
-    "min_amount": "100.00",
-    "max_amount": "200.00",
-}
-```
+| Field            | Type      | Description                                    |
+|------------------|-----------|------------------------------------------------|
+| `entity`         | `str`     | Multibanco entity number (5 digits)            |
+| `reference`      | `str`     | Multibanco reference number (9 digits)         |
+| `amount`         | `Decimal` | Amount of the reference                        |
+| `status`         | `str`     | Reference status: `"pending"`                  |
+| `transaction_id` | `str`     | Unique Eupago transaction identifier           |
+| `method`         | `str`     | Always `"multibanco"`                          |
+| `message`        | `str`     | Human-readable status description              |
 
-| Campo             | Tipo   | Descricao                                              |
-| ----------------- | ------ | ------------------------------------------------------ |
-| `status`          | `str`  | Estado do pedido: `"ok"` ou `"error"`                  |
-| `entity`          | `str`  | Entidade Multibanco (5 digitos)                        |
-| `reference`       | `str`  | Referencia de pagamento (9 digitos, formatada)         |
-| `amount`          | `str`  | Montante do pagamento                                  |
-| `currency`        | `str`  | Moeda (`"EUR"`)                                        |
-| `starts_at`       | `str`  | Data de inicio de validade                             |
-| `expires_at`      | `str`  | Data de expiracao                                      |
-| `allow_duplicate` | `bool` | Se pagamentos duplicados sao permitidos                |
-| `min_amount`      | `str`  | Montante minimo aceite                                 |
-| `max_amount`      | `str`  | Montante maximo aceite                                 |
+### `get_info` response
 
-### Resposta de `get_info`
+| Field       | Type              | Description                                              |
+|-------------|-------------------|----------------------------------------------------------|
+| `entity`    | `str`             | Multibanco entity number                                 |
+| `reference` | `str`             | Multibanco reference number                              |
+| `amount`    | `Decimal`         | Amount of the reference                                  |
+| `status`    | `str`             | Reference status: `"pending"`, `"paid"`, or `"expired"`  |
+| `paid_at`   | `datetime | None` | Datetime when payment was received, or `None`            |
+| `method`    | `str`             | Always `"multibanco"`                                    |
 
-```python
-{
-    "status": "ok",
-    "payment_status": "pending",
-    "entity": "10611",
-    "reference": "123 456 789",
-    "amount": "150.00",
-    "created_at": "2026-05-27T00:00:00Z",
-    "expires_at": "2026-06-03T00:00:00Z",
-    "paid_at": None,
-}
-```
+## Async variant
 
-## Variante async
+All methods are available as coroutines through `AsyncEupagoClient`:
 
 ```python
 import asyncio
 from decimal import Decimal
-from datetime import datetime, timedelta
 from eupago import AsyncEupagoClient
 
 async def main():
-    client = AsyncEupagoClient(
-        api_key="demo-api-key",
-        sandbox=True,
-    )
+    client = AsyncEupagoClient(api_key="your-api-key")
 
-    # Criar referencia Multibanco
     response = await client.multibanco.create_reference(
-        amount=Decimal("150.00"),
-        transaction_key="order-12345",
-        expires_at=datetime.now() + timedelta(days=7),
-        send_expiry_reminder=True,
+        amount=Decimal("49.99"),
+        order_id="order-3001",
         callback_url="https://example.com/callback",
+        expires_at="2026-06-15T23:59:59Z",
     )
 
-    print(f"Entidade: {response.entity}")
-    print(f"Referencia: {response.reference}")
-
-    # Consultar informacao
-    info = await client.multibanco.get_info(
-        reference=response.reference,
-        entity=response.entity,
-    )
-
-    print(f"Estado: {info.payment_status}")
-
-    await client.close()
+    print(response.entity)
+    print(response.reference)
 
 asyncio.run(main())
 ```
 
-## Notas
+## Notes
 
-1. **Entidade e referencia:** O cliente precisa de ambos para efetuar o pagamento. Apresente-os de forma clara na interface. A referencia e tipicamente formatada em grupos de 3 digitos (ex: `123 456 789`).
-
-2. **Validade da referencia:** Use `starts_at` e `expires_at` para controlar o periodo de validade. Sem `expires_at`, a referencia pode permanecer ativa indefinidamente (dependendo da configuracao da conta).
-
-3. **Pagamentos duplicados:** Por defeito, uma referencia aceita apenas um pagamento. Defina `allow_duplicate=True` se pretender aceitar multiplos pagamentos com a mesma referencia (util para donativos ou pagamentos recorrentes).
-
-4. **Montantes flexiveis:** Use `min_amount` e `max_amount` para permitir que o cliente pague um valor dentro de um intervalo. Isto e util quando o montante exato pode variar (ex: gorjetas, donativos).
-
-5. **Lembrete de expiracao:** Ative `send_expiry_reminder=True` para que a euPago envie um lembrete ao cliente antes da referencia expirar. Requer que o email do cliente esteja configurado.
-
-6. **Tempo de processamento:** Pagamentos Multibanco podem demorar ate 24-48 horas a serem confirmados pelo sistema bancario, embora normalmente sejam processados em poucas horas.
-
-7. **Montante maximo:** O montante maximo por transacao e de 99.999 EUR. Para montantes superiores, sera necessario dividir em multiplas referencias.
+- Multibanco references are typically valid for a limited period. Always set `expires_at` to avoid stale unpaid references accumulating.
+- The `starts_at` parameter is useful for pre-generating references that should only become payable on a future date (e.g., subscription renewals).
+- When `allow_duplicate` is `False` (the default), a reference can only be paid once. Set it to `True` for recurring payments on the same reference.
+- The `min_amount` and `max_amount` parameters create an open-amount reference, allowing the customer to pay any amount within the specified range. This is useful for donations or partial payments.
+- The `send_expiry_reminder` flag triggers an automatic notification to the customer before the reference expires, which can help reduce abandoned payments.
+- The entity number is assigned by Eupago and is shared across your account. The reference number is unique per transaction.
+- Customers can pay at any Multibanco ATM, through any Portuguese bank's online banking portal, or via their banking app.
+- The maximum amount per reference is **99,999 EUR**.

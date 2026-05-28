@@ -1,55 +1,55 @@
 # Webhooks
 
-## Como funcionam
+## How they work
 
-Quando um pagamento e confirmado (ex: o cliente aprova no MB WAY, ou paga a referencia Multibanco), a eupago envia uma notificacao HTTP ao teu servidor — o **webhook**.
+When a payment is confirmed (e.g. the customer approves on MB WAY, or pays at an ATM), eupago sends an HTTP notification to your server — the **webhook**.
 
-O teu servidor deve:
+Your server must:
 
-1. Receber o pedido
-2. Verificar a autenticidade (assinatura HMAC no v2.0)
-3. Actualizar a encomenda na base de dados
-4. Responder com **HTTP 200**
+1. Receive the request
+2. Verify authenticity (HMAC signature on v2.0)
+3. Update the order in your database
+4. Respond with **HTTP 200**
 
 ```
-Cliente paga ──► eupago processa ──► Webhook ao teu servidor
-                                          │
-                                          ▼
-                                    Actualiza encomenda
+Customer pays ──► eupago processes ──► Webhook to your server
+                                            │
+                                            ▼
+                                      Update order
 ```
 
-!!! warning "Retorna sempre HTTP 200"
-    Se o teu servidor nao retornar 200, a eupago vai reenviar o webhook:
+!!! warning "Always return HTTP 200"
+    If your server does not return 200, eupago will retry the webhook:
 
-    - A cada **2 minutos**, ate **3 tentativas**
-    - Depois, **a cada hora** durante **24 horas**
+    - Every **2 minutes**, up to **3 attempts**
+    - Then, **every hour** for **24 hours**
 
-    Apos esse periodo, o webhook e descartado.
+    After that period, the webhook is discarded.
 
 ---
 
-## Versoes do webhook
+## Webhook versions
 
-A eupago suporta duas versoes de webhook. Recomendamos a v2.0.
+eupago supports two webhook versions. We recommend v2.0.
 
 ### v1.0 — Legacy (GET)
 
-O webhook e enviado como **GET** com query parameters:
+The webhook is sent as a **GET** request with query parameters:
 
-| Parametro | Descricao | Exemplo |
+| Parameter | Description | Example |
 |---|---|---|
-| `valor` | Montante pago | `49.90` |
-| `identificador` | Order ID (o teu) | `ORD-2026-001` |
-| `transacao` | ID da transacao eupago | `78901` |
-| `referencia` | Referencia de pagamento | `999888777` |
-| `entidade` | Entidade Multibanco | `12345` |
-| `mp` | Metodo de pagamento | `MW:PT` |
-| `chave_api` | API key (para validacao) | `xxxx-xxxx` |
-| `data` | Data do pagamento | `2026-05-26` |
+| `valor` | Amount paid | `49.90` |
+| `identificador` | Order ID (yours) | `ORD-2026-001` |
+| `transacao` | eupago transaction ID | `78901` |
+| `referencia` | Payment reference | `999888777` |
+| `entidade` | Multibanco entity | `12345` |
+| `mp` | Payment method | `MW:PT` |
+| `chave_api` | API key (for validation) | `xxxx-xxxx` |
+| `data` | Payment date | `2026-05-26` |
 
-### v2.0 — Recomendado (POST + HMAC)
+### v2.0 — Recommended (POST + HMAC)
 
-O webhook e enviado como **POST** com body JSON e assinatura HMAC-SHA256 no header `X-Signature`.
+The webhook is sent as a **POST** request with a JSON body and HMAC-SHA256 signature in the `X-Signature` header.
 
 ```json
 {
@@ -70,20 +70,20 @@ O webhook e enviado como **POST** com body JSON e assinatura HMAC-SHA256 no head
 
 **Headers:**
 
-| Header | Descricao |
+| Header | Description |
 |---|---|
-| `X-Signature` | HMAC-SHA256 do body com o teu webhook secret |
-| `X-Initialization-Vector` | IV para decriptacao AES (opcional) |
+| `X-Signature` | HMAC-SHA256 of the body using your webhook secret |
+| `X-Initialization-Vector` | IV for AES decryption (optional) |
 | `Content-Type` | `application/json` |
 
-!!! tip "Usa sempre v2.0"
-    A v2.0 inclui assinatura HMAC para prevenir falsificacao, e opcionalmente encriptacao AES-256-CBC para proteger dados sensiveis em transito.
+!!! tip "Always use v2.0"
+    v2.0 includes HMAC signature to prevent forgery, and optionally AES-256-CBC encryption to protect sensitive data in transit.
 
 ---
 
-## Usar o SDK
+## Using the SDK
 
-O SDK abstrai ambas as versoes com uma unica funcao: `parse_webhook()`.
+The SDK abstracts both versions with a single function: `parse_webhook()`.
 
 ### Webhook v2.0 (POST)
 
@@ -94,11 +94,11 @@ from eupago.models import PaymentStatus
 event = parse_webhook(
     body=request.body,
     headers=dict(request.headers),
-    webhook_secret="o-teu-secret",  # Verifica HMAC automaticamente
+    webhook_secret="your-secret",  # HMAC verification is automatic
 )
 
 if event.status == PaymentStatus.PAID:
-    print(f"Encomenda {event.order_id} paga: {event.amount} {event.currency}")
+    print(f"Order {event.order_id} paid: {event.amount} {event.currency}")
 ```
 
 ### Webhook v1.0 (GET)
@@ -108,44 +108,44 @@ from eupago.webhooks import parse_webhook
 
 event = parse_webhook(query_params=dict(request.query_params))
 
-print(f"Encomenda {event.order_id} paga: {event.amount} {event.currency}")
+print(f"Order {event.order_id} paid: {event.amount} {event.currency}")
 ```
 
-### O objecto `WebhookEvent`
+### The `WebhookEvent` object
 
-Ambas as versoes retornam um `WebhookEvent` com campos normalizados:
+Both versions return a `WebhookEvent` with normalized fields:
 
-| Campo | Tipo | Descricao |
+| Field | Type | Description |
 |---|---|---|
-| `order_id` | `str \| None` | O teu order ID |
-| `transaction_id` | `str \| None` | ID da transacao eupago |
-| `reference` | `str \| None` | Referencia de pagamento |
-| `entity` | `str \| None` | Entidade Multibanco |
-| `amount` | `Decimal \| None` | Montante pago |
-| `currency` | `str` | Moeda (default `"EUR"`) |
-| `status` | `PaymentStatus` | Estado normalizado |
-| `method` | `str \| None` | Metodo de pagamento normalizado |
-| `paid_at` | `str \| None` | Data/hora do pagamento |
-| `channel` | `str \| None` | Canal eupago |
-| `fee` | `Decimal \| None` | Comissao eupago |
+| `order_id` | `str \| None` | Your order ID |
+| `transaction_id` | `str \| None` | eupago transaction ID |
+| `reference` | `str \| None` | Payment reference |
+| `entity` | `str \| None` | Multibanco entity |
+| `amount` | `Decimal \| None` | Amount paid |
+| `currency` | `str` | Currency (default `"EUR"`) |
+| `status` | `PaymentStatus` | Normalized status |
+| `method` | `str \| None` | Normalized payment method |
+| `paid_at` | `str \| None` | Payment date/time |
+| `channel` | `str \| None` | eupago channel |
+| `fee` | `Decimal \| None` | eupago fee |
 
 ---
 
-## Configurar no backoffice
+## Configuring in the backoffice
 
-1. Acede ao [backoffice eupago](https://sandbox.eupago.pt) (sandbox) ou [producao](https://clientes.eupago.pt)
-2. Vai a **Canais** > **Listagem de Canais**
-3. Selecciona o canal desejado
-4. Em **Callback URL**, introduz o URL do teu endpoint (ex: `https://loja.pt/eupago/callback`)
-5. Escolhe a versao do webhook (recomendamos v2.0)
-6. Se v2.0, copia o **Webhook Secret** para a tua aplicacao
+1. Access the [eupago backoffice](https://sandbox.eupago.pt) (sandbox) or [production](https://clientes.eupago.pt)
+2. Go to **Canais** > **Listagem de Canais**
+3. Select the desired channel
+4. In **Callback URL**, enter your endpoint URL (e.g. `https://myshop.com/eupago/callback`)
+5. Choose the webhook version (we recommend v2.0)
+6. If v2.0, copy the **Webhook Secret** to your application
 
-!!! warning "HTTPS obrigatorio"
-    A eupago so envia webhooks para URLs HTTPS em producao. Em desenvolvimento, usa ferramentas como [ngrok](https://ngrok.com/) para expor o teu servidor local.
+!!! warning "HTTPS required"
+    eupago only sends webhooks to HTTPS URLs in production. For development, use tools like [ngrok](https://ngrok.com/) to expose your local server.
 
 ---
 
-## Proximos passos
+## Next steps
 
-- [Verificacao de assinatura](signature.md) — HMAC-SHA256 e encriptacao AES
-- [Receitas](../recipes/index.md) — exemplos completos com FastAPI, Django, Flask
+- [Signature verification](signature.md) — HMAC-SHA256 and AES encryption
+- [Recipes](../recipes/index.md) — complete examples with FastAPI, Django, Flask

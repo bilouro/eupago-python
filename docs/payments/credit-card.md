@@ -1,296 +1,264 @@
-# Cartao de Credito
+# Credit Card
 
-## O que e
+## What it is
 
-O pagamento por cartao de credito na euPago utiliza **3D Secure** para autenticacao do titular. O SDK gera um `paymentUrl` para o qual o cliente e redirecionado para completar o pagamento de forma segura. Suporta tres fluxos: pagamento direto, autorizacao + captura, e subscricoes recorrentes.
+Credit Card payments through Eupago use **3D Secure** authentication for all transactions. When a payment is initiated, the API returns a `paymentUrl` where the customer must be redirected to complete the 3D Secure challenge and enter their card details.
 
-- **Montante maximo:** 3.999 EUR
-- **Autenticacao:** 3D Secure obrigatoria
-- **Cartao de teste:** `4018810000150015`, CVV `0101`
+Three flows are supported:
 
-## Diagrama de fluxo
+- **Direct payment** -- a single call that charges the customer immediately after 3D Secure authentication.
+- **Authorization + Capture** -- a two-step flow where the amount is reserved first and captured later.
+- **Subscriptions** -- create a recurring subscription and charge it on a schedule.
 
-### Pagamento direto
+The maximum amount per transaction is **3,999 EUR**.
 
-```mermaid
-sequenceDiagram
-    participant Comerciante
-    participant EupagoSDK
-    participant EupagoAPI
-    participant 3DSecure
-    participant Cliente
+## Flow diagram
 
-    Comerciante->>EupagoSDK: create_payment(amount, ...)
-    EupagoSDK->>EupagoAPI: POST /api/v1.02/creditcard/create
-    EupagoAPI-->>EupagoSDK: paymentUrl + transacao
-    EupagoSDK-->>Comerciante: CreditCardResponse
-
-    Comerciante->>Cliente: Redirect para paymentUrl
-    Cliente->>3DSecure: Autenticacao 3D Secure
-    3DSecure->>EupagoAPI: Resultado da autenticacao
-
-    alt Pagamento aprovado
-        EupagoAPI->>Comerciante: Redirect success_url
-        EupagoAPI->>Comerciante: Callback (sucesso)
-    else Pagamento rejeitado
-        EupagoAPI->>Comerciante: Redirect error_url
-        EupagoAPI->>Comerciante: Callback (falha)
-    end
-```
-
-### Autorizacao + Captura
+### Direct payment
 
 ```mermaid
 sequenceDiagram
-    participant Comerciante
-    participant EupagoSDK
-    participant EupagoAPI
-    participant 3DSecure
-    participant Cliente
+    participant Merchant
+    participant EupagoAPI as Eupago API
+    participant Customer
+    participant Bank as 3D Secure
 
-    Comerciante->>EupagoSDK: authorize(amount, ...)
-    EupagoSDK->>EupagoAPI: POST /api/v1.02/creditcard/authorize
-    EupagoAPI-->>EupagoSDK: paymentUrl + auth_id
-    EupagoSDK-->>Comerciante: AuthResponse
-
-    Comerciante->>Cliente: Redirect para paymentUrl
-    Cliente->>3DSecure: Autenticacao 3D Secure
-    3DSecure->>EupagoAPI: Autenticacao aprovada
-    EupagoAPI->>Comerciante: Callback (autorizado)
-
-    note over Comerciante: Captura posterior
-    Comerciante->>EupagoSDK: capture(auth_id, amount)
-    EupagoSDK->>EupagoAPI: POST /api/v1.02/creditcard/capture
-    EupagoAPI-->>EupagoSDK: CaptureResponse
-    EupagoSDK-->>Comerciante: Pagamento capturado
+    Merchant->>EupagoAPI: create_payment(amount, ...)
+    EupagoAPI-->>Merchant: transactionId, paymentUrl
+    Merchant->>Customer: Redirect to paymentUrl
+    Customer->>Bank: 3D Secure authentication
+    Bank-->>Customer: Authentication result
+    Customer->>EupagoAPI: Card details + 3DS result
+    EupagoAPI->>Customer: Redirect to success_url / error_url
+    EupagoAPI->>Merchant: Callback (payment result)
 ```
 
-### Subscricoes
+### Authorization + Capture
 
 ```mermaid
 sequenceDiagram
-    participant Comerciante
-    participant EupagoSDK
-    participant EupagoAPI
-    participant 3DSecure
-    participant Cliente
+    participant Merchant
+    participant EupagoAPI as Eupago API
+    participant Customer
+    participant Bank as 3D Secure
 
-    Comerciante->>EupagoSDK: create_subscription(amount, ...)
-    EupagoSDK->>EupagoAPI: POST /api/v1.02/creditcard/subscription/create
-    EupagoAPI-->>EupagoSDK: paymentUrl + subscription_id
-    EupagoSDK-->>Comerciante: SubscriptionResponse
-
-    Comerciante->>Cliente: Redirect para paymentUrl
-    Cliente->>3DSecure: Autenticacao 3D Secure (1o pagamento)
-    3DSecure->>EupagoAPI: Autenticacao aprovada
-    EupagoAPI->>Comerciante: Callback (subscricao ativa)
-
-    loop Cobracas recorrentes
-        Comerciante->>EupagoSDK: charge_subscription(subscription_id, amount)
-        EupagoSDK->>EupagoAPI: POST /api/v1.02/creditcard/subscription/charge
-        EupagoAPI-->>EupagoSDK: ChargeResponse
-        EupagoSDK-->>Comerciante: Cobranca efetuada
-    end
+    Merchant->>EupagoAPI: authorize(amount, ...)
+    EupagoAPI-->>Merchant: transactionId, paymentUrl
+    Merchant->>Customer: Redirect to paymentUrl
+    Customer->>Bank: 3D Secure authentication
+    Bank-->>Customer: Authentication result
+    Customer->>EupagoAPI: Card details + 3DS result
+    EupagoAPI->>Merchant: Callback (authorized)
+    Note over Merchant: Later, when ready to charge
+    Merchant->>EupagoAPI: capture(transactionId, amount)
+    EupagoAPI-->>Merchant: status "captured"
 ```
 
-## Exemplo completo
+### Subscriptions
 
-### Pagamento direto
+```mermaid
+sequenceDiagram
+    participant Merchant
+    participant EupagoAPI as Eupago API
+    participant Customer
+    participant Bank as 3D Secure
+
+    Merchant->>EupagoAPI: create_subscription(amount, frequency, ...)
+    EupagoAPI-->>Merchant: subscriptionId, paymentUrl
+    Merchant->>Customer: Redirect to paymentUrl
+    Customer->>Bank: 3D Secure authentication (first charge)
+    Bank-->>Customer: Authentication result
+    EupagoAPI->>Merchant: Callback (first payment)
+    Note over Merchant: On each billing cycle
+    Merchant->>EupagoAPI: charge_subscription(subscriptionId, amount)
+    EupagoAPI-->>Merchant: transactionId, status
+    EupagoAPI->>Merchant: Callback (recurring payment result)
+```
+
+## Full example
+
+### Direct payment
 
 ```python
 from decimal import Decimal
 from eupago import EupagoClient
 
-client = EupagoClient(
-    api_key="demo-api-key",
-    sandbox=True,
-)
+client = EupagoClient(api_key="your-api-key")
 
-# Pagamento direto com cartao de credito
 response = client.credit_card.create_payment(
-    amount=Decimal("49.99"),
-    transaction_key="order-12345",
-    success_url="https://example.com/success",
-    error_url="https://example.com/error",
-    callback_url="https://example.com/callback",
-    language="pt",
-)
-
-print(f"URL de pagamento: {response.payment_url}")
-print(f"Transacao: {response.transaction_id}")
-# Redirecionar o cliente para response.payment_url
-```
-
-### Autorizacao + Captura
-
-```python
-from decimal import Decimal
-from eupago import EupagoClient
-
-client = EupagoClient(
-    api_key="demo-api-key",
-    sandbox=True,
-)
-
-# Passo 1: Autorizar
-auth_response = client.credit_card.authorize(
-    amount=Decimal("99.99"),
-    transaction_key="order-67890",
-    success_url="https://example.com/success",
-    error_url="https://example.com/error",
-    callback_url="https://example.com/callback",
-)
-
-print(f"URL de autenticacao: {auth_response.payment_url}")
-print(f"Auth ID: {auth_response.authorization_id}")
-# Redirecionar o cliente para auth_response.payment_url
-
-# Passo 2: Capturar (apos confirmacao via callback)
-capture_response = client.credit_card.capture(
-    authorization_id=auth_response.authorization_id,
-    amount=Decimal("99.99"),
-)
-
-print(f"Captura: {capture_response.status}")
-print(f"Transacao: {capture_response.transaction_id}")
-```
-
-### Subscricoes
-
-```python
-from decimal import Decimal
-from eupago import EupagoClient
-
-client = EupagoClient(
-    api_key="demo-api-key",
-    sandbox=True,
-)
-
-# Passo 1: Criar subscricao (primeiro pagamento com 3D Secure)
-sub_response = client.credit_card.create_subscription(
     amount=Decimal("29.99"),
-    transaction_key="sub-12345",
+    currency="EUR",
+    order_id="order-4001",
+    callback_url="https://example.com/callback",
     success_url="https://example.com/success",
     error_url="https://example.com/error",
+    cancel_url="https://example.com/cancel",
+    language="en",
+)
+
+print(response.transaction_id)  # "eupago-xxxx-xxxx"
+print(response.payment_url)     # "https://sandbox.eupago.pt/pay/xxxx"
+# Redirect the customer to response.payment_url
+```
+
+### Authorization + Capture
+
+```python
+from decimal import Decimal
+from eupago import EupagoClient
+
+client = EupagoClient(api_key="your-api-key")
+
+# Step 1: Authorize
+auth = client.credit_card.authorize(
+    amount=Decimal("199.00"),
+    currency="EUR",
+    order_id="order-4002",
     callback_url="https://example.com/callback",
+    success_url="https://example.com/success",
+    error_url="https://example.com/error",
+)
+
+print(auth.payment_url)  # Redirect customer here for 3DS
+
+# Step 2: Capture (after authorization callback is received)
+capture = client.credit_card.capture(
+    transaction_id=auth.transaction_id,
+    amount=Decimal("199.00"),
+)
+
+print(capture.status)  # "captured"
+```
+
+### Subscriptions
+
+```python
+from decimal import Decimal
+from eupago import EupagoClient
+
+client = EupagoClient(api_key="your-api-key")
+
+# Step 1: Create subscription (first charge via redirect)
+subscription = client.credit_card.create_subscription(
+    amount=Decimal("9.99"),
     frequency="monthly",
+    currency="EUR",
+    order_id="sub-5001",
+    callback_url="https://example.com/callback",
+    success_url="https://example.com/success",
+    error_url="https://example.com/error",
 )
 
-print(f"URL de pagamento: {sub_response.payment_url}")
-print(f"Subscription ID: {sub_response.subscription_id}")
-# Redirecionar o cliente para sub_response.payment_url
+print(subscription.subscription_id)  # "sub-xxxx-xxxx"
+print(subscription.payment_url)       # Redirect customer here
 
-# Passo 2: Cobrar subscricao (pagamentos seguintes, sem 3D Secure)
-charge_response = client.credit_card.charge_subscription(
-    subscription_id=sub_response.subscription_id,
-    amount=Decimal("29.99"),
-    transaction_key="sub-12345-month2",
+# Step 2: Charge on subsequent billing cycles
+charge = client.credit_card.charge_subscription(
+    subscription_id=subscription.subscription_id,
+    amount=Decimal("9.99"),
+    order_id="sub-5001-month2",
 )
 
-print(f"Cobranca: {charge_response.status}")
-print(f"Transacao: {charge_response.transaction_id}")
+print(charge.transaction_id)
+print(charge.status)  # "captured"
 ```
 
-## Parametros
+## Parameters
 
 ### `create_payment`
 
-| Parametro         | Tipo      | Obrigatorio | Descricao                                                    |
-| ----------------- | --------- | ----------- | ------------------------------------------------------------ |
-| `amount`          | `Decimal` | Sim         | Montante a cobrar (max: 3.999 EUR)                           |
-| `transaction_key` | `str`     | Sim         | Identificador unico da transacao no sistema do comerciante   |
-| `success_url`     | `str`     | Sim         | URL de redirect apos pagamento aprovado                      |
-| `error_url`       | `str`     | Sim         | URL de redirect apos pagamento rejeitado                     |
-| `callback_url`    | `str`     | Nao         | URL para receber notificacoes de estado                      |
-| `language`        | `str`     | Nao         | Idioma da pagina de pagamento (`"pt"`, `"en"`, `"es"`)       |
-| `description`     | `str`     | Nao         | Descricao do pagamento                                       |
+| Parameter      | Type      | Required | Description                                                    |
+|----------------|-----------|----------|----------------------------------------------------------------|
+| `amount`       | `Decimal` | Yes      | Amount to charge (max 3,999 EUR)                               |
+| `currency`     | `str`     | No       | ISO 4217 currency code. Default: `"EUR"`                       |
+| `order_id`     | `str`     | No       | Your internal order identifier                                 |
+| `callback_url` | `str`     | No       | URL to receive the payment result notification                 |
+| `success_url`  | `str`     | No       | URL to redirect the customer after successful payment          |
+| `error_url`    | `str`     | No       | URL to redirect the customer after failed payment              |
+| `cancel_url`   | `str`     | No       | URL to redirect the customer if they cancel the payment        |
+| `language`     | `str`     | No       | Payment page language (`"pt"`, `"en"`, `"es"`, `"fr"`)         |
 
 ### `authorize`
 
-| Parametro         | Tipo      | Obrigatorio | Descricao                                                    |
-| ----------------- | --------- | ----------- | ------------------------------------------------------------ |
-| `amount`          | `Decimal` | Sim         | Montante a pre-autorizar (max: 3.999 EUR)                    |
-| `transaction_key` | `str`     | Sim         | Identificador unico da transacao no sistema do comerciante   |
-| `success_url`     | `str`     | Sim         | URL de redirect apos autorizacao aprovada                    |
-| `error_url`       | `str`     | Sim         | URL de redirect apos autorizacao rejeitada                   |
-| `callback_url`    | `str`     | Nao         | URL para receber notificacoes de estado                      |
+| Parameter      | Type      | Required | Description                                                    |
+|----------------|-----------|----------|----------------------------------------------------------------|
+| `amount`       | `Decimal` | Yes      | Amount to authorize (max 3,999 EUR)                            |
+| `currency`     | `str`     | No       | ISO 4217 currency code. Default: `"EUR"`                       |
+| `order_id`     | `str`     | No       | Your internal order identifier                                 |
+| `callback_url` | `str`     | No       | URL to receive the authorization result notification           |
+| `success_url`  | `str`     | No       | URL to redirect the customer after successful authorization    |
+| `error_url`    | `str`     | No       | URL to redirect the customer after failed authorization        |
 
 ### `capture`
 
-| Parametro          | Tipo      | Obrigatorio | Descricao                                                  |
-| ------------------ | --------- | ----------- | ---------------------------------------------------------- |
-| `authorization_id` | `str`     | Sim         | ID da autorizacao obtido no passo `authorize`              |
-| `amount`           | `Decimal` | Sim         | Montante a capturar (pode ser inferior ao autorizado)      |
+| Parameter        | Type      | Required | Description                                            |
+|------------------|-----------|----------|--------------------------------------------------------|
+| `transaction_id` | `str`     | Yes      | Transaction ID returned by `authorize`                 |
+| `amount`         | `Decimal` | Yes      | Amount to capture (must be <= authorized amount)       |
 
 ### `create_subscription`
 
-| Parametro         | Tipo      | Obrigatorio | Descricao                                                    |
-| ----------------- | --------- | ----------- | ------------------------------------------------------------ |
-| `amount`          | `Decimal` | Sim         | Montante do primeiro pagamento (max: 3.999 EUR)              |
-| `transaction_key` | `str`     | Sim         | Identificador unico da subscricao                            |
-| `success_url`     | `str`     | Sim         | URL de redirect apos pagamento aprovado                      |
-| `error_url`       | `str`     | Sim         | URL de redirect apos pagamento rejeitado                     |
-| `callback_url`    | `str`     | Nao         | URL para receber notificacoes de estado                      |
-| `frequency`       | `str`     | Nao         | Frequencia da subscricao (`"monthly"`, `"yearly"`, etc.)     |
+| Parameter      | Type      | Required | Description                                                    |
+|----------------|-----------|----------|----------------------------------------------------------------|
+| `amount`       | `Decimal` | Yes      | Recurring amount to charge (max 3,999 EUR)                     |
+| `frequency`    | `str`     | Yes      | Billing frequency: `"monthly"`, `"quarterly"`, `"yearly"`      |
+| `currency`     | `str`     | No       | ISO 4217 currency code. Default: `"EUR"`                       |
+| `order_id`     | `str`     | No       | Your internal order identifier                                 |
+| `callback_url` | `str`     | No       | URL to receive payment notifications                           |
+| `success_url`  | `str`     | No       | URL to redirect the customer after successful first payment    |
+| `error_url`    | `str`     | No       | URL to redirect the customer after failed first payment        |
 
 ### `charge_subscription`
 
-| Parametro         | Tipo      | Obrigatorio | Descricao                                                    |
-| ----------------- | --------- | ----------- | ------------------------------------------------------------ |
-| `subscription_id` | `str`     | Sim         | ID da subscricao obtido em `create_subscription`             |
-| `amount`          | `Decimal` | Sim         | Montante a cobrar nesta recorrencia                          |
-| `transaction_key` | `str`     | Sim         | Identificador unico desta cobranca                           |
+| Parameter         | Type      | Required | Description                                           |
+|-------------------|-----------|----------|-------------------------------------------------------|
+| `subscription_id` | `str`     | Yes      | Subscription ID returned by `create_subscription`     |
+| `amount`          | `Decimal` | Yes      | Amount to charge for this billing cycle                |
+| `order_id`        | `str`     | No       | Your internal order identifier for this charge         |
 
-## Resposta
+## Response
 
-### Resposta de `create_payment` / `authorize`
+### `create_payment` / `authorize` response
 
-```python
-{
-    "status": "ok",
-    "payment_url": "https://pay.eupago.pt/ccrd/abc123",
-    "transaction_id": "txn_cc_12345",
-    "method": "creditcard",
-    "amount": "49.99",
-    "currency": "EUR",
-}
-```
+| Field            | Type   | Description                                   |
+|------------------|--------|-----------------------------------------------|
+| `transaction_id` | `str`  | Unique Eupago transaction identifier          |
+| `payment_url`    | `str`  | URL to redirect the customer for 3D Secure    |
+| `status`         | `str`  | Initial status: `"pending"`                   |
+| `method`         | `str`  | Always `"credit_card"`                        |
+| `message`        | `str`  | Human-readable status description             |
 
-### Resposta de `capture`
+### `capture` response
 
-```python
-{
-    "status": "ok",
-    "transaction_id": "txn_cc_12345",
-    "amount": "99.99",
-    "captured": True,
-}
-```
+| Field            | Type   | Description                                   |
+|------------------|--------|-----------------------------------------------|
+| `transaction_id` | `str`  | Unique Eupago transaction identifier          |
+| `status`         | `str`  | `"captured"` or `"failed"`                    |
+| `method`         | `str`  | Always `"credit_card"`                        |
+| `message`        | `str`  | Human-readable status description             |
 
-### Resposta de `create_subscription`
+### `create_subscription` response
 
-```python
-{
-    "status": "ok",
-    "payment_url": "https://pay.eupago.pt/ccrd/sub456",
-    "subscription_id": "sub_12345",
-    "transaction_id": "txn_cc_67890",
-    "amount": "29.99",
-    "currency": "EUR",
-    "frequency": "monthly",
-}
-```
+| Field             | Type   | Description                                  |
+|-------------------|--------|----------------------------------------------|
+| `subscription_id` | `str`  | Unique subscription identifier               |
+| `payment_url`     | `str`  | URL to redirect the customer for first charge|
+| `status`          | `str`  | Initial status: `"pending"`                  |
+| `method`          | `str`  | Always `"credit_card"`                       |
+| `message`         | `str`  | Human-readable status description            |
 
-| Campo             | Tipo   | Descricao                                                |
-| ----------------- | ------ | -------------------------------------------------------- |
-| `status`          | `str`  | Estado do pedido: `"ok"` ou `"error"`                    |
-| `payment_url`     | `str`  | URL para redirecionar o cliente (pagina de pagamento)    |
-| `transaction_id`  | `str`  | Identificador unico da transacao na euPago               |
-| `subscription_id` | `str`  | Identificador da subscricao (apenas em subscricoes)      |
-| `amount`          | `str`  | Montante do pagamento                                    |
-| `currency`        | `str`  | Moeda (`"EUR"`)                                          |
+### `charge_subscription` response
 
-## Variante async
+| Field            | Type   | Description                                   |
+|------------------|--------|-----------------------------------------------|
+| `transaction_id` | `str`  | Unique Eupago transaction identifier          |
+| `status`         | `str`  | `"captured"` or `"failed"`                    |
+| `method`         | `str`  | Always `"credit_card"`                        |
+| `message`        | `str`  | Human-readable status description             |
+
+## Async variant
+
+All methods are available as coroutines through `AsyncEupagoClient`:
 
 ```python
 import asyncio
@@ -298,58 +266,27 @@ from decimal import Decimal
 from eupago import AsyncEupagoClient
 
 async def main():
-    client = AsyncEupagoClient(
-        api_key="demo-api-key",
-        sandbox=True,
-    )
+    client = AsyncEupagoClient(api_key="your-api-key")
 
-    # Pagamento direto
     response = await client.credit_card.create_payment(
-        amount=Decimal("49.99"),
-        transaction_key="order-12345",
-        success_url="https://example.com/success",
-        error_url="https://example.com/error",
+        amount=Decimal("29.99"),
+        order_id="order-4001",
         callback_url="https://example.com/callback",
-    )
-
-    print(f"URL: {response.payment_url}")
-
-    # Subscricao
-    sub = await client.credit_card.create_subscription(
-        amount=Decimal("29.99"),
-        transaction_key="sub-async-001",
         success_url="https://example.com/success",
         error_url="https://example.com/error",
     )
 
-    print(f"Subscription ID: {sub.subscription_id}")
-
-    # Cobranca recorrente
-    charge = await client.credit_card.charge_subscription(
-        subscription_id=sub.subscription_id,
-        amount=Decimal("29.99"),
-        transaction_key="sub-async-001-month2",
-    )
-
-    print(f"Cobranca: {charge.status}")
-
-    await client.close()
+    print(response.payment_url)  # Redirect customer here
 
 asyncio.run(main())
 ```
 
-## Notas
+## Notes
 
-1. **3D Secure obrigatorio:** Todos os pagamentos com cartao de credito requerem autenticacao 3D Secure. O cliente e redirecionado para a pagina do banco para autenticacao antes do pagamento ser processado.
-
-2. **Montante maximo:** O limite por transacao e de 3.999 EUR, significativamente inferior ao MB WAY e Multibanco. Para montantes superiores, considere metodos de pagamento alternativos.
-
-3. **URLs de redirect:** As URLs `success_url` e `error_url` sao obrigatorias. Apos o pagamento, o cliente e redirecionado para a URL apropriada. Nao confie apenas no redirect para confirmar o pagamento; use sempre o callback.
-
-4. **Cartao de teste:** Em ambiente sandbox, use o cartao `4018810000150015` com CVV `0101` para simular pagamentos aprovados. Outros cartoes de teste podem estar disponiveis na documentacao da euPago.
-
-5. **Subscricoes:** O primeiro pagamento de uma subscricao requer autenticacao 3D Secure. Os pagamentos seguintes (via `charge_subscription`) sao processados automaticamente sem interacao do cliente.
-
-6. **Captura parcial:** No fluxo de autorizacao + captura, e possivel capturar um montante inferior ao autorizado. Isto e util quando o montante final pode variar (ex: encomendas com peso variavel).
-
-7. **Payment URL:** O `paymentUrl` retornado tem validade limitada. Redirecione o cliente o mais rapido possivel apos receber a resposta.
+- All credit card transactions use **3D Secure** authentication. The customer must be redirected to the `paymentUrl` to complete the payment.
+- The maximum amount per transaction is **3,999 EUR**.
+- For testing in the sandbox environment, use the test card number **4018810000150015** with CVV **0101** and any future expiration date.
+- The `success_url` and `error_url` are where the customer is redirected after the 3D Secure flow -- they indicate the customer's redirect destination, not the final payment status. Always rely on the `callback_url` for definitive payment confirmation.
+- When using authorization + capture, the captured amount can be less than or equal to the authorized amount.
+- Subscription charges after the first payment do not require 3D Secure redirection, as the card is already tokenized from the initial authorization.
+- The `frequency` parameter in `create_subscription` defines the billing cycle but does not automatically trigger charges. You must call `charge_subscription` on each billing date.

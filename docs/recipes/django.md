@@ -1,14 +1,14 @@
 # Django
 
-Integracao completa do SDK eupago com [Django](https://www.djangoproject.com/).
+Complete eupago SDK integration with [Django](https://www.djangoproject.com/).
 
-## Instalacao
+## Installation
 
 ```bash
 pip install eupago django
 ```
 
-## Estrutura do projecto
+## Project structure
 
 ```
 myshop/
@@ -21,9 +21,9 @@ myshop/
     └── views.py
 ```
 
-## Configuracao (settings.py)
+## Configuration (settings.py)
 
-Adiciona as variaveis de configuracao ao teu `settings.py`:
+Add the configuration variables to your `settings.py`:
 
 ```python
 # myshop/settings.py
@@ -39,7 +39,7 @@ EUPAGO_SANDBOX = os.environ.get("EUPAGO_SANDBOX", "true").lower() == "true"
 ## Views (views.py)
 
 ```python
-"""eupago + Django — pagamento MB WAY + webhook."""
+"""eupago + Django — MB WAY payment + webhook."""
 
 import json
 from decimal import Decimal, InvalidOperation
@@ -57,7 +57,7 @@ from eupago.exceptions import (
 )
 from eupago.webhooks import parse_webhook
 
-# ── Client (reutilizado entre requests) ───────────────────────
+# ── Client (reused across requests) ──────────────────────────
 
 client = EupagoClient(
     api_key=settings.EUPAGO_API_KEY,
@@ -65,11 +65,11 @@ client = EupagoClient(
 )
 
 
-# ── View: criar pagamento ────────────────────────────────────
+# ── View: create payment ─────────────────────────────────────
 
 @require_POST
 def create_mbway_payment(request):
-    """Cria um pagamento MB WAY."""
+    """Create an MB WAY payment."""
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
@@ -106,7 +106,7 @@ def create_mbway_payment(request):
 @csrf_exempt
 @require_POST
 def eupago_webhook_v2(request):
-    """Recebe webhook v2.0 (POST com assinatura HMAC)."""
+    """Receive v2.0 webhook (POST with HMAC signature)."""
     try:
         event = parse_webhook(
             body=request.body,
@@ -117,11 +117,11 @@ def eupago_webhook_v2(request):
         return JsonResponse({"error": "Invalid signature"}, status=403)
 
     if event.status == PaymentStatus.PAID:
-        # TODO: actualizar encomenda na base de dados
+        # TODO: update order in the database
         # Order.objects.filter(order_id=event.order_id).update(status="paid")
         pass
     elif event.status == PaymentStatus.EXPIRED:
-        # TODO: marcar encomenda como expirada
+        # TODO: mark order as expired
         pass
 
     return JsonResponse({"status": "ok"})
@@ -131,11 +131,11 @@ def eupago_webhook_v2(request):
 
 @require_GET
 def eupago_webhook_v1(request):
-    """Recebe webhook v1.0 (GET com query params) — compatibilidade legacy."""
+    """Receive v1.0 webhook (GET with query params) — legacy compatibility."""
     event = parse_webhook(query_params=request.GET.dict())
 
     if event.status == PaymentStatus.PAID:
-        # TODO: actualizar encomenda na base de dados
+        # TODO: update order in the database
         pass
 
     return JsonResponse({"status": "ok"})
@@ -167,19 +167,19 @@ urlpatterns = [
 ]
 ```
 
-## Correr
+## Running
 
 ```bash
 export EUPAGO_API_KEY="xxxx-xxxx-xxxx-xxxx-xxxx"
-export EUPAGO_WEBHOOK_SECRET="o-teu-secret"
+export EUPAGO_WEBHOOK_SECRET="your-secret"
 export EUPAGO_SANDBOX="true"
 
 python manage.py runserver
 ```
 
-## Testar com curl
+## Testing with curl
 
-### Criar pagamento
+### Create payment
 
 ```bash
 curl -X POST http://localhost:8000/payments/mbway/ \
@@ -187,7 +187,7 @@ curl -X POST http://localhost:8000/payments/mbway/ \
   -d '{"order_id": "ORD-001", "amount": "49.90", "phone_number": "351#912345678"}'
 ```
 
-### Simular webhook v2.0
+### Simulate v2.0 webhook
 
 ```bash
 curl -X POST http://localhost:8000/eupago/callback/ \
@@ -195,16 +195,16 @@ curl -X POST http://localhost:8000/eupago/callback/ \
   -d '{"transactions": {"identifier": "ORD-001", "amount": {"value": 49.90}, "status": "Paid", "trid": 123}}'
 ```
 
-## Notas
+## Notes
 
 !!! warning "CSRF"
-    O endpoint de webhook usa `@csrf_exempt` porque a eupago nao envia tokens CSRF. A seguranca e garantida pela verificacao HMAC.
+    The webhook endpoint uses `@csrf_exempt` because eupago does not send CSRF tokens. Security is ensured by HMAC verification.
 
 !!! tip "Django REST Framework"
-    Se usas DRF, podes converter as views para `APIView` ou `@api_view`. O SDK funciona exactamente da mesma forma — so muda como acedes ao body e headers.
+    If you use DRF, you can convert the views to `APIView` or `@api_view`. The SDK works exactly the same way — only how you access the body and headers changes.
 
-!!! info "Async com Django"
-    Django 4.1+ suporta views async. Para usar `create_payment_async()`:
+!!! info "Async with Django"
+    Django 4.1+ supports async views. To use `create_payment_async()`:
 
     ```python
     async def create_mbway_payment(request):
@@ -212,4 +212,4 @@ curl -X POST http://localhost:8000/eupago/callback/ \
         return JsonResponse({...})
     ```
 
-    Requer um servidor ASGI (ex: Daphne, Uvicorn).
+    Requires an ASGI server (e.g. Daphne, Uvicorn).

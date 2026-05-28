@@ -1,12 +1,12 @@
-# Receitas
+# Recipes
 
-Guias completos de integracao com frameworks Python populares. Cada receita inclui:
+Complete integration guides for popular Python frameworks. Each recipe includes:
 
-- Criacao de pagamento
-- Handler de webhook (v2.0 POST + v1.0 GET)
-- Boas praticas de seguranca
+- Payment creation
+- Webhook handler (v2.0 POST + v1.0 GET)
+- Security best practices
 
-## Frameworks disponiveis
+## Available frameworks
 
 <div class="grid cards" markdown>
 
@@ -14,7 +14,7 @@ Guias completos de integracao com frameworks Python populares. Cada receita incl
 
     ---
 
-    Integracao async-first com FastAPI
+    Async-first integration with FastAPI
 
     [:octicons-arrow-right-24: FastAPI](fastapi.md)
 
@@ -22,7 +22,7 @@ Guias completos de integracao com frameworks Python populares. Cada receita incl
 
     ---
 
-    Integracao com Django views e urls.py
+    Integration with Django views and urls.py
 
     [:octicons-arrow-right-24: Django](django.md)
 
@@ -30,20 +30,20 @@ Guias completos de integracao com frameworks Python populares. Cada receita incl
 
     ---
 
-    Integracao com Flask routes
+    Integration with Flask routes
 
     [:octicons-arrow-right-24: Flask](flask.md)
 
 </div>
 
-## Qual framework escolher?
+## Which framework to choose?
 
-| Criterio | FastAPI | Django | Flask |
+| Criteria | FastAPI | Django | Flask |
 |---|---|---|---|
-| Async nativo | Sim | Parcial (ASGI) | Nao (usa gevent/etc.) |
-| Baterias incluidas | Nao | Sim (ORM, admin, auth) | Nao |
-| Curva de aprendizagem | Baixa | Media | Baixa |
-| Ideal para | APIs, microservicos | Apps full-stack | Prototipos, APIs simples |
+| Native async | Yes | Partial (ASGI) | No (use gevent/etc.) |
+| Batteries included | No | Yes (ORM, admin, auth) | No |
+| Learning curve | Low | Medium | Low |
+| Ideal for | APIs, microservices | Full-stack apps | Prototypes, simple APIs |
 
-!!! tip "Sem framework?"
-    O SDK funciona sem framework — so precisas de Python. Os exemplos usam frameworks apenas para o endpoint HTTP que recebe webhooks.
+!!! tip "No framework?"
+    The SDK works without any framework — you only need Python. The examples use frameworks only for the HTTP endpoint that receives webhooks.

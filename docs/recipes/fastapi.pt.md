@@ -1,17 +1,17 @@
 # FastAPI
 
-Complete eupago SDK integration with [FastAPI](https://fastapi.tiangolo.com/).
+Integracao completa do SDK eupago com [FastAPI](https://fastapi.tiangolo.com/).
 
-## Installation
+## Instalacao
 
 ```bash
 pip install eupago fastapi uvicorn
 ```
 
-## Full example
+## Exemplo completo
 
 ```python
-"""eupago + FastAPI — MB WAY payment + webhook."""
+"""eupago + FastAPI — pagamento MB WAY + webhook."""
 
 import os
 from decimal import Decimal
@@ -28,9 +28,9 @@ from eupago.exceptions import (
 )
 from eupago.webhooks import parse_webhook
 
-app = FastAPI(title="Shop with eupago")
+app = FastAPI(title="Loja com eupago")
 
-# ── Configuration ─────────────────────────────────────────────
+# ── Configuracao ──────────────────────────────────────────────
 
 API_KEY = os.environ["EUPAGO_API_KEY"]
 WEBHOOK_SECRET = os.environ.get("EUPAGO_WEBHOOK_SECRET", "")
@@ -39,7 +39,7 @@ SANDBOX = os.environ.get("EUPAGO_SANDBOX", "true").lower() == "true"
 client = EupagoClient(api_key=API_KEY, sandbox=SANDBOX)
 
 
-# ── Request models ────────────────────────────────────────────
+# ── Modelos de request ────────────────────────────────────────
 
 class PaymentRequest(BaseModel):
     order_id: str
@@ -47,11 +47,11 @@ class PaymentRequest(BaseModel):
     phone_number: str
 
 
-# ── Endpoint: create payment ──────────────────────────────────
+# ── Endpoint: criar pagamento ─────────────────────────────────
 
 @app.post("/payments/mbway")
 async def create_mbway_payment(payload: PaymentRequest):
-    """Create an MB WAY payment."""
+    """Cria um pagamento MB WAY."""
     try:
         result = await client.mbway.create_payment_async(
             order_id=payload.order_id,
@@ -74,7 +74,7 @@ async def create_mbway_payment(payload: PaymentRequest):
 
 @app.post("/eupago/callback")
 async def eupago_webhook_v2(request: Request):
-    """Receive v2.0 webhook (POST with HMAC signature)."""
+    """Recebe webhook v2.0 (POST com assinatura HMAC)."""
     body = await request.body()
     headers = dict(request.headers)
 
@@ -87,18 +87,18 @@ async def eupago_webhook_v2(request: Request):
     except SignatureError:
         raise HTTPException(status_code=403, detail="Invalid signature")
 
-    # Process the payment
+    # Processar o pagamento
     if event.status == PaymentStatus.PAID:
-        # TODO: update order in the database
+        # TODO: actualizar encomenda na base de dados
         print(
-            f"Payment confirmed: order={event.order_id} "
+            f"Pagamento confirmado: order={event.order_id} "
             f"amount={event.amount} {event.currency}"
         )
     elif event.status == PaymentStatus.EXPIRED:
-        # TODO: mark order as expired
-        print(f"Payment expired: order={event.order_id}")
+        # TODO: marcar encomenda como expirada
+        print(f"Pagamento expirado: order={event.order_id}")
 
-    # Return 200 so eupago does not retry
+    # Retornar 200 para a eupago nao reenviar
     return JSONResponse(content={"status": "ok"}, status_code=200)
 
 
@@ -106,13 +106,13 @@ async def eupago_webhook_v2(request: Request):
 
 @app.get("/eupago/callback")
 async def eupago_webhook_v1(request: Request):
-    """Receive v1.0 webhook (GET with query params) — legacy compatibility."""
+    """Recebe webhook v1.0 (GET com query params) — compatibilidade legacy."""
     event = parse_webhook(query_params=dict(request.query_params))
 
     if event.status == PaymentStatus.PAID:
-        # TODO: update order in the database
+        # TODO: actualizar encomenda na base de dados
         print(
-            f"Payment confirmed (v1): order={event.order_id} "
+            f"Pagamento confirmado (v1): order={event.order_id} "
             f"amount={event.amount}"
         )
 
@@ -126,19 +126,19 @@ async def shutdown():
     await client.aclose()
 ```
 
-## Running
+## Correr
 
 ```bash
 export EUPAGO_API_KEY="xxxx-xxxx-xxxx-xxxx-xxxx"
-export EUPAGO_WEBHOOK_SECRET="your-secret"
+export EUPAGO_WEBHOOK_SECRET="o-teu-secret"
 export EUPAGO_SANDBOX="true"
 
 uvicorn app:app --reload --port 8000
 ```
 
-## Testing with curl
+## Testar com curl
 
-### Create payment
+### Criar pagamento
 
 ```bash
 curl -X POST http://localhost:8000/payments/mbway \
@@ -146,7 +146,7 @@ curl -X POST http://localhost:8000/payments/mbway \
   -d '{"order_id": "ORD-001", "amount": "49.90", "phone_number": "351#912345678"}'
 ```
 
-### Simulate v2.0 webhook
+### Simular webhook v2.0
 
 ```bash
 curl -X POST http://localhost:8000/eupago/callback \
@@ -154,13 +154,13 @@ curl -X POST http://localhost:8000/eupago/callback \
   -d '{"transactions": {"identifier": "ORD-001", "amount": {"value": 49.90}, "status": "Paid", "trid": 123}}'
 ```
 
-## Notes
+## Notas
 
-!!! tip "Native async"
-    FastAPI is async by nature. Use `create_payment_async()` with `await` to avoid blocking the event loop.
+!!! tip "Async nativo"
+    O FastAPI e async por natureza. Usa `create_payment_async()` e `await` para nao bloquear o event loop.
 
 !!! warning "Context manager"
-    The example uses `@app.on_event("shutdown")` to close the client. Alternatively, you can use [lifespan](https://fastapi.tiangolo.com/advanced/events/):
+    O exemplo usa `@app.on_event("shutdown")` para fechar o client. Em alternativa, podes usar [lifespan](https://fastapi.tiangolo.com/advanced/events/):
 
     ```python
     from contextlib import asynccontextmanager

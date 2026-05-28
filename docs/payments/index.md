@@ -1,63 +1,63 @@
-# Qual método escolher?
+# Which method to choose?
 
-## Guia de decisão
+## Decision guide
 
-| Preciso de... | Método | Tempo de pagamento | Valor máx. |
+| I need to... | Method | Payment time | Max amount |
 |---|---|---|---|
-| Pagamento imediato via telemóvel | [MB WAY](mbway.md) | 5 minutos | 99.999 EUR |
-| Referência para ATM ou homebanking | [Multibanco](multibanco.md) | 1–30 dias | 99.999 EUR |
-| Pagar com Visa/Mastercard | [Cartão de Crédito](credit-card.md) | Imediato | 3.999 EUR |
-| Apple Wallet | [Apple Pay](apple-pay.md) | Imediato | 99.999 EUR |
-| Google Wallet | [Google Pay](google-pay.md) | Imediato | 99.999 EUR |
-| Cobrar mensalidade automaticamente | [CC Subscription](credit-card.md#subscricoes) | Recorrente | 3.999 EUR |
-| Reservar montante e cobrar depois | [CC Auth + Capture](credit-card.md#autorizacao-captura) | Flexível | 3.999 EUR |
+| Immediate mobile payment | [MB WAY](mbway.md) | 5 minutes | 99,999 EUR |
+| ATM or online banking reference | [Multibanco](multibanco.md) | 1–30 days | 99,999 EUR |
+| Pay with Visa/Mastercard | [Credit Card](credit-card.md) | Immediate | 3,999 EUR |
+| Apple Wallet | [Apple Pay](apple-pay.md) | Immediate | 99,999 EUR |
+| Google Wallet | [Google Pay](google-pay.md) | Immediate | 99,999 EUR |
+| Automatic monthly charges | [CC Subscription](credit-card.md#subscriptions) | Recurring | 3,999 EUR |
+| Reserve amount, charge later | [CC Auth + Capture](credit-card.md#authorization-capture) | Flexible | 3,999 EUR |
 
-## Fluxos comparados
+## Compared flows
 
-### Pagamento directo (MB WAY, Apple Pay, Google Pay)
+### Direct payment (MB WAY, Apple Pay, Google Pay)
 
 ```mermaid
 sequenceDiagram
     participant App
     participant eupago
-    participant Cliente
-    App->>eupago: Criar pagamento
+    participant Customer
+    App->>eupago: Create payment
     eupago-->>App: transactionID
-    eupago->>Cliente: Notificação
-    Cliente->>eupago: Aprova
+    eupago->>Customer: Notification
+    Customer->>eupago: Approves
     eupago->>App: Webhook (PAID)
 ```
 
-### Referência (Multibanco)
+### Reference (Multibanco)
 
 ```mermaid
 sequenceDiagram
     participant App
     participant eupago
-    participant Cliente
-    App->>eupago: Criar referência
-    eupago-->>App: entidade + referência
-    App->>Cliente: Mostra entidade/referência
-    Cliente->>ATM/Banco: Paga com a referência
+    participant Customer
+    App->>eupago: Create reference
+    eupago-->>App: entity + reference
+    App->>Customer: Show entity/reference
+    Customer->>ATM/Bank: Pay with the reference
     eupago->>App: Webhook (PAID)
 ```
 
-### Redirect (Cartão de Crédito)
+### Redirect (Credit Card)
 
 ```mermaid
 sequenceDiagram
     participant App
     participant eupago
-    participant Cliente
-    App->>eupago: Criar pagamento
+    participant Customer
+    App->>eupago: Create payment
     eupago-->>App: paymentUrl
-    App->>Cliente: Redireciona para paymentUrl
-    Cliente->>eupago: Preenche dados + 3D Secure
+    App->>Customer: Redirect to paymentUrl
+    Customer->>eupago: Fill card details + 3D Secure
     eupago->>App: Webhook (PAID)
-    eupago->>Cliente: Redireciona para successUrl
+    eupago->>Customer: Redirect to successUrl
 ```
 
-## Todos os métodos usam o mesmo padrão
+## All methods follow the same pattern
 
 ```python
 from decimal import Decimal
@@ -65,14 +65,14 @@ from eupago import EupagoClient
 
 client = EupagoClient(api_key="...", sandbox=True)
 
-# O resultado é sempre PaymentResult
-result = client.{método}.create_payment(
+# The result is always PaymentResult
+result = client.{method}.create_payment(
     order_id="ORD-001",
     amount=Decimal("49.90"),
     ...
 )
 
 print(result.status)          # PaymentStatus.PENDING
-print(result.transaction_id)  # ID da transação
-print(result.raw_response)    # JSON original da eupago
+print(result.transaction_id)  # Transaction ID
+print(result.raw_response)    # Raw eupago JSON
 ```

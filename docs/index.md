@@ -4,10 +4,10 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/eupago)](https://pypi.org/project/eupago/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bilouro/eupago-python/blob/main/LICENSE)
 
-O primeiro SDK Python para a [eupago](https://www.eupago.com), o gateway de pagamentos português.
+The first Python SDK for [eupago](https://www.eupago.com), the Portuguese payment gateway.
 
-!!! warning "SDK da comunidade"
-    Este é um projecto open-source independente, não afiliado nem endossado pela eupago.
+!!! warning "Community SDK"
+    This is an independent open-source project, not affiliated with or endorsed by eupago.
 
 ## Quickstart
 
@@ -15,7 +15,7 @@ O primeiro SDK Python para a [eupago](https://www.eupago.com), o gateway de paga
 from decimal import Decimal
 from eupago import EupagoClient
 
-client = EupagoClient(api_key="a-tua-key", sandbox=True)
+client = EupagoClient(api_key="your-key", sandbox=True)
 
 payment = client.mbway.create_payment(
     order_id="ORD-001",
@@ -27,59 +27,59 @@ print(payment.transaction_id)  # "txn-abc-123"
 print(payment.status)          # PaymentStatus.PENDING
 ```
 
-## Métodos de pagamento
+## Payment Methods
 
-| Método | Descrição | Módulo |
+| Method | Description | Module |
 |---|---|---|
-| **MB WAY** | Pagamento via telemóvel (aprovação em 5 min) | `client.mbway` |
-| **Multibanco** | Referência para ATM ou homebanking | `client.multibanco` |
-| **Cartão de Crédito** | Visa/Mastercard com 3D Secure | `client.credit_card` |
-| **Apple Pay** | Pagamento Apple Wallet | `client.apple_pay` |
-| **Google Pay** | Pagamento Google Wallet | `client.google_pay` |
+| **MB WAY** | Mobile payment (5 min approval) | `client.mbway` |
+| **Multibanco** | ATM/online banking reference | `client.multibanco` |
+| **Credit Card** | Visa/Mastercard with 3D Secure | `client.credit_card` |
+| **Apple Pay** | Apple Wallet payment | `client.apple_pay` |
+| **Google Pay** | Google Wallet payment | `client.google_pay` |
 
-## Porquê este SDK?
+## Why this SDK?
 
-- **Sync + Async** — mesmo client, suffix `_async` para métodos assíncronos
-- **100% tipado** — `mypy --strict`, autocomplete total no IDE
-- **Decimal** — nunca float para dinheiro
-- **Bilingue** — documentação em Português e English
-- **Webhooks** — parsing + verificação HMAC-SHA256
-- **Retries seguros** — só em GETs, POST nunca repete (risco de pagamento duplicado)
+- **Sync + Async** — same client, `_async` suffix for async methods
+- **Fully typed** — `mypy --strict`, full IDE autocomplete
+- **Decimal** — never float for money
+- **Bilingual** — documentation in Portuguese and English
+- **Webhooks** — parsing + HMAC-SHA256 verification
+- **Safe retries** — GET only, POST never retries (duplicate payment risk)
 
-## Próximos passos
+## Next steps
 
 <div class="grid cards" markdown>
 
--   :material-download:{ .lg .middle } **Instalação**
+-   :material-download:{ .lg .middle } **Installation**
 
     ---
 
-    Instalar e configurar em 2 minutos
+    Install and configure in 2 minutes
 
-    [:octicons-arrow-right-24: Começar](getting-started/index.md)
+    [:octicons-arrow-right-24: Get started](getting-started/index.md)
 
--   :material-credit-card:{ .lg .middle } **Pagamentos**
+-   :material-credit-card:{ .lg .middle } **Payments**
 
     ---
 
-    Qual método usar? Guia de decisão
+    Which method should you use? Decision guide
 
-    [:octicons-arrow-right-24: Pagamentos](payments/index.md)
+    [:octicons-arrow-right-24: Payments](payments/index.md)
 
 -   :material-webhook:{ .lg .middle } **Webhooks**
 
     ---
 
-    Receber notificações de pagamento
+    Receive payment notifications
 
     [:octicons-arrow-right-24: Webhooks](webhooks/index.md)
 
--   :material-flask:{ .lg .middle } **Receitas**
+-   :material-flask:{ .lg .middle } **Recipes**
 
     ---
 
-    Guias completos para FastAPI, Django, Flask
+    Complete guides for FastAPI, Django, Flask
 
-    [:octicons-arrow-right-24: Receitas](recipes/index.md)
+    [:octicons-arrow-right-24: Recipes](recipes/index.md)
 
 </div>

@@ -1,18 +1,18 @@
-# Verificacao de assinatura
+# Signature Verification
 
 ## HMAC-SHA256
 
-A eupago assina cada webhook v2.0 com HMAC-SHA256. O header `X-Signature` contem o hash hexadecimal do body, calculado com o teu webhook secret.
+eupago signs each v2.0 webhook with HMAC-SHA256. The `X-Signature` header contains the hex digest of the body, computed with your webhook secret.
 
-### Como funciona
+### How it works
 
 ```
 HMAC-SHA256(webhook_secret, request_body) == X-Signature header
 ```
 
-### Verificacao automatica com o SDK
+### Automatic verification with the SDK
 
-Quando passas `webhook_secret` a `parse_webhook()`, a verificacao e automatica:
+When you pass `webhook_secret` to `parse_webhook()`, verification is automatic:
 
 ```python
 from eupago.webhooks import parse_webhook
@@ -22,18 +22,18 @@ try:
     event = parse_webhook(
         body=request.body,
         headers=dict(request.headers),
-        webhook_secret="o-teu-secret",
+        webhook_secret="your-secret",
     )
 except SignatureError:
-    # Assinatura invalida — rejeitar o pedido
+    # Invalid signature — reject the request
     return Response(status_code=403)
 ```
 
-Se a assinatura nao corresponder, o SDK lanca `SignatureError`.
+If the signature does not match, the SDK raises `SignatureError`.
 
-### Verificacao manual
+### Manual verification
 
-Se precisares de verificar manualmente (sem o SDK):
+If you need to verify manually (without the SDK):
 
 ```python
 import hashlib
@@ -43,45 +43,45 @@ def verify_eupago_signature(body: bytes, signature: str, secret: str) -> bool:
     expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(expected, signature)
 
-# Uso
+# Usage
 body = request.body  # bytes
 signature = request.headers["X-Signature"]
-secret = "o-teu-webhook-secret"
+secret = "your-webhook-secret"
 
 if not verify_eupago_signature(body, signature, secret):
-    raise ValueError("Assinatura invalida!")
+    raise ValueError("Invalid signature!")
 ```
 
-!!! danger "Usa compare_digest"
-    Nunca uses `==` para comparar hashes — e vulneravel a timing attacks. Usa sempre `hmac.compare_digest()`.
+!!! danger "Use compare_digest"
+    Never use `==` to compare hashes — it is vulnerable to timing attacks. Always use `hmac.compare_digest()`.
 
 ---
 
-## Encriptacao AES-256-CBC
+## AES-256-CBC Encryption
 
-Opcionalmente, a eupago pode encriptar o body do webhook com AES-256-CBC. Nesse caso, o body contem um campo `data` com o payload encriptado em Base64, e o header `X-Initialization-Vector` contem o IV.
+Optionally, eupago can encrypt the webhook body with AES-256-CBC. In this case, the body contains a `data` field with the Base64-encoded encrypted payload, and the `X-Initialization-Vector` header contains the IV.
 
-### Requisitos
+### Requirements
 
-A encriptacao requer o pacote `cryptography`:
+Encryption requires the `cryptography` package:
 
 ```bash
 pip install cryptography
 ```
 
-Ou instalar o SDK com o extra:
+Or install the SDK with the extra:
 
 ```bash
 pip install eupago[crypto]
 ```
 
-### Desencriptacao automatica com o SDK
+### Automatic decryption with the SDK
 
-O SDK detecta e desencripta automaticamente quando:
+The SDK detects and decrypts automatically when:
 
-1. O body contem um campo `data`
-2. O header `X-Initialization-Vector` esta presente
-3. Passaste `webhook_secret` a `parse_webhook()`
+1. The body contains a `data` field
+2. The `X-Initialization-Vector` header is present
+3. You passed `webhook_secret` to `parse_webhook()`
 
 ```python
 from eupago.webhooks import parse_webhook
@@ -91,16 +91,16 @@ try:
     event = parse_webhook(
         body=request.body,
         headers=dict(request.headers),
-        webhook_secret="o-teu-secret",
+        webhook_secret="your-secret",
     )
-    # event ja contem os dados desencriptados
+    # event already contains the decrypted data
 except DecryptionError as e:
-    print(f"Falha na desencriptacao: {e}")
+    print(f"Decryption failed: {e}")
 ```
 
-### Desencriptacao manual
+### Manual decryption
 
-Se precisares de desencriptar manualmente:
+If you need to decrypt manually:
 
 ```python
 import base64
@@ -130,85 +130,85 @@ def decrypt_eupago_payload(
     return json.loads(result)
 
 
-# Uso
+# Usage
 body = json.loads(request.body)
 iv = request.headers["X-Initialization-Vector"]
-secret = "o-teu-webhook-secret"
+secret = "your-webhook-secret"
 
 payload = decrypt_eupago_payload(body["data"], secret, iv)
 print(payload["transactions"]["identifier"])
 ```
 
-### Como a chave e derivada
+### How the key is derived
 
-A eupago usa SHA-256 do teu webhook secret como chave AES de 256 bits:
+eupago uses SHA-256 of your webhook secret as the 256-bit AES key:
 
 ```
 AES_key = SHA-256(webhook_secret)    # 32 bytes
 ```
 
-O IV (Initialization Vector) e gerado aleatoriamente por cada webhook e enviado no header `X-Initialization-Vector` em Base64.
+The IV (Initialization Vector) is randomly generated for each webhook and sent in the `X-Initialization-Vector` header as Base64.
 
 ---
 
-## Boas praticas de seguranca
+## Security best practices
 
-### 1. Verifica sempre a assinatura
+### 1. Always verify the signature
 
-Nunca processes um webhook sem verificar a assinatura HMAC. Sem verificacao, qualquer pessoa pode enviar webhooks falsos ao teu servidor.
+Never process a webhook without verifying the HMAC signature. Without verification, anyone can send fake webhooks to your server.
 
 ```python
-# CORRECTO — verifica a assinatura
+# CORRECT — verifies the signature
 event = parse_webhook(body=body, headers=headers, webhook_secret=secret)
 
-# ERRADO — aceita qualquer webhook
+# WRONG — accepts any webhook
 event = parse_webhook(body=body, headers=headers)
 ```
 
-### 2. Guarda o secret de forma segura
+### 2. Store the secret securely
 
 ```python
 import os
 
-# CORRECTO — variavel de ambiente
+# CORRECT — environment variable
 WEBHOOK_SECRET = os.environ["EUPAGO_WEBHOOK_SECRET"]
 
-# ERRADO — hardcoded no codigo
+# WRONG — hardcoded in source code
 WEBHOOK_SECRET = "abc123"
 ```
 
-### 3. Usa HTTPS
+### 3. Use HTTPS
 
-Em producao, o teu endpoint de webhook deve usar HTTPS. Em desenvolvimento, usa [ngrok](https://ngrok.com/) ou similar.
+In production, your webhook endpoint must use HTTPS. For development, use [ngrok](https://ngrok.com/) or similar.
 
-### 4. Responde com 200 rapidamente
+### 4. Respond with 200 quickly
 
-Processa o webhook de forma assincrona (ex: fila de tarefas) e responde com 200 o mais rapido possivel. Se demorares mais de 30 segundos, a eupago considera que o webhook falhou.
+Process the webhook asynchronously (e.g. task queue) and respond with 200 as fast as possible. If you take longer than 30 seconds, eupago considers the webhook failed.
 
-### 5. Idempotencia
+### 5. Idempotency
 
-A eupago pode reenviar o mesmo webhook multiplas vezes. O teu handler deve ser idempotente — verifica se ja processaste o `transaction_id` antes de actualizar a encomenda.
+eupago may resend the same webhook multiple times. Your handler must be idempotent — check if you have already processed the `transaction_id` before updating the order.
 
 ```python
 event = parse_webhook(body=body, headers=headers, webhook_secret=secret)
 
-# Verificar se ja foi processado
+# Check if already processed
 if db.webhooks.exists(transaction_id=event.transaction_id):
-    return Response(status_code=200)  # Ja processado, retorna 200
+    return Response(status_code=200)  # Already processed, return 200
 
-# Processar
+# Process
 db.orders.update(order_id=event.order_id, status="paid")
 db.webhooks.insert(transaction_id=event.transaction_id)
 ```
 
-### 6. Nao confies apenas no webhook
+### 6. Do not rely solely on the webhook
 
-Para pagamentos de alto valor, verifica o estado directamente via API alem do webhook:
+For high-value payments, verify the status directly via API in addition to the webhook:
 
 ```python
-# Webhook recebido — confirmar via API
+# Webhook received — confirm via API
 status = client.mbway.get_status(transaction_id=event.transaction_id)
 if status.status == PaymentStatus.PAID:
-    # Pagamento confirmado
+    # Payment confirmed
     ...
 ```

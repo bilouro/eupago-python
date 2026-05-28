@@ -1,8 +1,8 @@
-# Erros e Troubleshooting
+# Errors & Troubleshooting
 
-## Hierarquia de excepcoes
+## Exception hierarchy
 
-Todas as excepcoes do SDK herdam de `EupagoError`. Podes capturar `EupagoError` para apanhar qualquer erro do SDK, ou ser mais especifico.
+All SDK exceptions inherit from `EupagoError`. You can catch `EupagoError` to handle any SDK error, or be more specific.
 
 ```mermaid
 graph TD
@@ -21,15 +21,15 @@ graph TD
 
 ---
 
-## Referencia de excepcoes
+## Exception reference
 
 ### EupagoError
 
-**Classe base** para todas as excepcoes do SDK.
+**Base class** for all SDK exceptions.
 
-| Atributo | Tipo | Descricao |
+| Attribute | Type | Description |
 |---|---|---|
-| `message` | `str` | Mensagem de erro |
+| `message` | `str` | Error message |
 
 ```python
 from eupago.exceptions import EupagoError
@@ -37,20 +37,20 @@ from eupago.exceptions import EupagoError
 try:
     result = client.mbway.create_payment(...)
 except EupagoError as e:
-    print(f"Erro eupago: {e.message}")
+    print(f"eupago error: {e.message}")
 ```
 
 ---
 
 ### AuthenticationError
 
-**API key invalida** ou token OAuth expirado.
+**Invalid API key** or expired OAuth token.
 
-Quando e lancada:
+When raised:
 
-- API key incorrecta ou desactivada
-- Token OAuth expirado e nao renovavel
-- Credenciais de sandbox usadas em producao (ou vice-versa)
+- Incorrect or deactivated API key
+- Expired OAuth token that cannot be renewed
+- Sandbox credentials used in production (or vice versa)
 
 ```python
 from eupago.exceptions import AuthenticationError
@@ -58,7 +58,7 @@ from eupago.exceptions import AuthenticationError
 try:
     result = client.mbway.create_payment(...)
 except AuthenticationError:
-    # Verificar a API key no backoffice eupago
+    # Check the API key in the eupago backoffice
     ...
 ```
 
@@ -66,14 +66,14 @@ except AuthenticationError:
 
 ### ValidationError
 
-**Parametros invalidos** detectados localmente, antes de chamar a API.
+**Invalid parameters** detected locally, before calling the API.
 
-Quando e lancada:
+When raised:
 
-- Montante negativo ou zero
-- Montante excede o maximo permitido
-- Numero de telefone com formato invalido
-- Campos obrigatorios em falta
+- Negative or zero amount
+- Amount exceeds the maximum allowed
+- Phone number with invalid format
+- Missing required fields
 
 ```python
 from eupago.exceptions import ValidationError
@@ -81,25 +81,25 @@ from eupago.exceptions import ValidationError
 try:
     result = client.mbway.create_payment(
         order_id="ORD-001",
-        amount=Decimal("-5.00"),  # Invalido!
+        amount=Decimal("-5.00"),  # Invalid!
         phone_number="912345678",
     )
 except ValidationError as e:
-    print(f"Parametros invalidos: {e.message}")
+    print(f"Invalid parameters: {e.message}")
 ```
 
 ---
 
 ### ApiError
 
-**Erro retornado pela API eupago.** Classe base para erros de API especificos.
+**Error returned by the eupago API.** Base class for specific API errors.
 
-| Atributo | Tipo | Descricao |
+| Attribute | Type | Description |
 |---|---|---|
-| `message` | `str` | Mensagem de erro |
-| `status_code` | `int \| None` | Codigo HTTP |
-| `error_code` | `int \| None` | Codigo de erro eupago |
-| `request_id` | `str \| None` | ID do request para debug |
+| `message` | `str` | Error message |
+| `status_code` | `int \| None` | HTTP status code |
+| `error_code` | `int \| None` | eupago error code |
+| `request_id` | `str \| None` | Request ID for debugging |
 
 ```python
 from eupago.exceptions import ApiError
@@ -107,30 +107,30 @@ from eupago.exceptions import ApiError
 try:
     result = client.mbway.create_payment(...)
 except ApiError as e:
-    print(f"Erro API: {e.message}")
+    print(f"API error: {e.message}")
     print(f"HTTP: {e.status_code}")
-    print(f"Codigo eupago: {e.error_code}")
+    print(f"eupago code: {e.error_code}")
 ```
 
 ---
 
 ### PaymentError
 
-**Pagamento falhado** ou recusado pela eupago.
+**Payment failed** or declined by eupago.
 
-Quando e lancada:
+When raised:
 
-- Pagamento recusado pelo banco
-- Servico de pagamento inactivo
-- Referencia invalida
+- Payment declined by the bank
+- Payment service inactive
+- Invalid reference
 
 ---
 
 ### RateLimitError
 
-**Pedido limitado** pela eupago (HTTP 429).
+**Request rate limited** by eupago (HTTP 429).
 
-Como lidar:
+How to handle:
 
 ```python
 from eupago.exceptions import RateLimitError
@@ -138,7 +138,7 @@ from eupago.exceptions import RateLimitError
 try:
     result = client.mbway.create_payment(...)
 except RateLimitError:
-    # Esperar e tentar novamente (apenas para consultas, nunca para POST)
+    # Wait and try again (only for queries, never for POST)
     ...
 ```
 
@@ -146,42 +146,42 @@ except RateLimitError:
 
 ### NotFoundError
 
-**Referencia ou transacao nao encontrada.**
+**Reference or transaction not found.**
 
-Quando e lancada:
+When raised:
 
-- Transaction ID inexistente
-- Referencia de pagamento invalida
+- Non-existent transaction ID
+- Invalid payment reference
 
 ---
 
 ### ServiceUnavailableError
 
-**API eupago indisponivel** (HTTP 503).
+**eupago API unavailable** (HTTP 503).
 
-Como lidar:
+How to handle:
 
-- Verificar [status da eupago](https://www.eupago.com)
-- Tentar novamente mais tarde
-- O SDK faz retry automatico em GETs
+- Check [eupago status](https://www.eupago.com)
+- Try again later
+- The SDK retries automatically on GETs
 
 ---
 
 ### WebhookError
 
-**Erro no processamento de webhook.** Classe base para erros de webhook.
+**Webhook processing error.** Base class for webhook errors.
 
 ---
 
 ### SignatureError
 
-**Assinatura HMAC invalida** no webhook.
+**Invalid HMAC signature** on webhook.
 
-Quando e lancada:
+When raised:
 
-- O header `X-Signature` nao corresponde ao body
-- Webhook secret errado
-- Body foi modificado em transito
+- The `X-Signature` header does not match the body
+- Wrong webhook secret
+- Body was modified in transit
 
 ```python
 from eupago.exceptions import SignatureError
@@ -189,7 +189,7 @@ from eupago.exceptions import SignatureError
 try:
     event = parse_webhook(body=body, headers=headers, webhook_secret=secret)
 except SignatureError:
-    # Rejeitar — possivel tentativa de falsificacao
+    # Reject — possible forgery attempt
     return Response(status_code=403)
 ```
 
@@ -197,14 +197,14 @@ except SignatureError:
 
 ### DecryptionError
 
-**Falha na desencriptacao** do payload do webhook.
+**Failed to decrypt** the webhook payload.
 
-Quando e lancada:
+When raised:
 
-- Pacote `cryptography` nao instalado
-- Webhook secret errado
-- IV corrompido
-- Dados encriptados corrompidos
+- `cryptography` package not installed
+- Wrong webhook secret
+- Corrupted IV
+- Corrupted encrypted data
 
 ```python
 from eupago.exceptions import DecryptionError
@@ -212,20 +212,20 @@ from eupago.exceptions import DecryptionError
 try:
     event = parse_webhook(body=body, headers=headers, webhook_secret=secret)
 except DecryptionError as e:
-    print(f"Desencriptacao falhou: {e.message}")
+    print(f"Decryption failed: {e.message}")
 ```
 
 ---
 
 ### NetworkError
 
-**Erro de rede**: timeout, conexao recusada, falha DNS.
+**Network error**: timeout, connection refused, DNS failure.
 
-Quando e lancada:
+When raised:
 
-- Timeout na ligacao a API
-- Servidor inacessivel
-- Erro de DNS
+- API connection timeout
+- Server unreachable
+- DNS error
 
 ```python
 from eupago.exceptions import NetworkError
@@ -233,90 +233,90 @@ from eupago.exceptions import NetworkError
 try:
     result = client.mbway.create_payment(...)
 except NetworkError:
-    # Verificar conexao de rede
+    # Check network connection
     ...
 ```
 
 ---
 
-## Codigos de erro eupago (legacy)
+## eupago error codes (legacy)
 
-A API legacy da eupago retorna codigos numericos no campo de resposta. O SDK converte-os em excepcoes automaticamente.
+The legacy eupago API returns numeric codes in the response field. The SDK converts them to exceptions automatically.
 
-| Codigo | Significado | Excepcao SDK |
+| Code | Meaning | SDK Exception |
 |---|---|---|
-| `0` | Sucesso | _(sem excepcao)_ |
-| `-7` | Servico inactivo — o metodo de pagamento nao esta activo no teu canal | `PaymentError` |
-| `-8` | Referencia invalida — formato ou numero de referencia incorrecto | `PaymentError` |
-| `-9` | Valores incorrectos — montante ou outros campos com valores errados | `ValidationError` |
-| `-10` | Chave invalida — API key errada ou desactivada | `AuthenticationError` |
-| `-11` | Pagamento nao encontrado — transaction ID inexistente | `NotFoundError` |
-| `-12` | Alias invalido — numero de telefone MB WAY com formato errado | `ValidationError` |
+| `0` | Success | _(no exception)_ |
+| `-7` | Service inactive — the payment method is not active on your channel | `PaymentError` |
+| `-8` | Invalid reference — incorrect reference format or number | `PaymentError` |
+| `-9` | Incorrect values — amount or other fields have wrong values | `ValidationError` |
+| `-10` | Invalid key — wrong or deactivated API key | `AuthenticationError` |
+| `-11` | Payment not found — non-existent transaction ID | `NotFoundError` |
+| `-12` | Invalid alias — MB WAY phone number with wrong format | `ValidationError` |
 
 ---
 
 ## Troubleshooting
 
-### "API key invalida"
+### "Invalid API key"
 
-**Sintoma:** `AuthenticationError` em todos os pedidos.
+**Symptom:** `AuthenticationError` on all requests.
 
-**Solucoes:**
+**Solutions:**
 
-1. Verifica a API key no [backoffice eupago](https://clientes.eupago.pt) > Canais > Listagem de Canais
-2. Confirma que estas a usar `sandbox=True` com uma key de sandbox
-3. Verifica que nao ha espacos ou caracteres extra na key
-4. Pede uma nova key ao suporte: suporte@eupago.pt
+1. Check the API key in the [eupago backoffice](https://clientes.eupago.pt) > Canais > Listagem de Canais
+2. Confirm you are using `sandbox=True` with a sandbox key
+3. Verify there are no spaces or extra characters in the key
+4. Request a new key from support: suporte@eupago.pt
 
 ```python
-# Verifica se estás a usar o ambiente correcto
+# Check you are using the correct environment
 client = EupagoClient(
     api_key="xxxx-xxxx-xxxx-xxxx-xxxx",
-    sandbox=True,  # True para sandbox, False para producao
+    sandbox=True,  # True for sandbox, False for production
 )
 ```
 
 ---
 
-### "Webhook nao chegou"
+### "Webhook not received"
 
-**Sintoma:** O pagamento foi feito, mas o teu servidor nao recebeu o webhook.
+**Symptom:** The payment was made, but your server did not receive the webhook.
 
-**Solucoes:**
+**Solutions:**
 
-1. **Verifica o URL no backoffice** — Canais > Listagem de Canais > Callback URL
-2. **Verifica se o URL e acessivel publicamente** — a eupago precisa de aceder ao teu servidor
-3. **Verifica a firewall** — portas 80/443 devem estar abertas para os IPs da eupago
-4. **Retorna HTTP 200** — se retornas outro codigo, a eupago tenta reenviar
-5. **Verifica os logs do servidor** — procura erros 500 ou timeouts
-6. **Usa ngrok em desenvolvimento** — `ngrok http 8000`
+1. **Check the URL in the backoffice** — Canais > Listagem de Canais > Callback URL
+2. **Verify the URL is publicly accessible** — eupago needs to reach your server
+3. **Check the firewall** — ports 80/443 must be open for eupago IPs
+4. **Return HTTP 200** — if you return another code, eupago will retry
+5. **Check server logs** — look for 500 errors or timeouts
+6. **Use ngrok in development** — `ngrok http 8000`
 
 ```bash
-# Testar se o URL e acessivel
-curl -X POST https://teu-servidor.pt/eupago/callback \
+# Test if the URL is accessible
+curl -X POST https://your-server.com/eupago/callback \
   -H "Content-Type: application/json" \
   -d '{"test": true}'
 ```
 
 ---
 
-### "Pagamento duplicado"
+### "Duplicate payment"
 
-**Sintoma:** O mesmo pagamento aparece duas vezes no teu sistema.
+**Symptom:** The same payment appears twice in your system.
 
-**Causa:** Repetir um request POST a API eupago. A eupago nao suporta idempotency keys.
+**Cause:** Retrying a POST request to the eupago API. eupago does not support idempotency keys.
 
-**Solucoes:**
+**Solutions:**
 
-1. **Nunca fazes retry de POST** — o SDK ja garante isto
-2. **Verifica o teu codigo** — o botao "Pagar" esta protegido contra double-click?
-3. **Usa o `order_id`** como chave unica — se ja existe, nao cries outro pagamento
+1. **Never retry POST** — the SDK already enforces this
+2. **Check your code** — is the "Pay" button protected against double-click?
+3. **Use `order_id`** as a unique key — if it already exists, do not create another payment
 
 ```python
-# CORRECTO — verificar antes de criar
+# CORRECT — check before creating
 existing = db.payments.find(order_id="ORD-001")
 if existing:
-    return existing  # Retornar o pagamento existente
+    return existing  # Return the existing payment
 
 result = client.mbway.create_payment(
     order_id="ORD-001",
@@ -325,35 +325,35 @@ result = client.mbway.create_payment(
 )
 ```
 
-!!! danger "POST nunca faz retry"
-    O SDK nunca repete requests POST. Se um POST falhar com timeout, **nao** tentes novamente — verifica o estado via consulta (GET) primeiro.
+!!! danger "POST never retries"
+    The SDK never retries POST requests. If a POST fails with a timeout, **do not** try again — check the status via a query (GET) first.
 
 ---
 
 ### "Timeout"
 
-**Sintoma:** `NetworkError` com mensagem de timeout.
+**Symptom:** `NetworkError` with a timeout message.
 
-**Solucoes:**
+**Solutions:**
 
-1. **Aumenta o timeout** — o default e 10 segundos
+1. **Increase the timeout** — the default is 10 seconds
 
     ```python
     client = EupagoClient(api_key="...", timeout=30.0)
     ```
 
-2. **Verifica a tua rede** — pings ao `sandbox.eupago.pt` ou `clientes.eupago.pt`
-3. **Verifica se a eupago esta operacional** — problemas temporarios do lado deles
-4. **Usa async** — evita bloquear a thread principal em aplicacoes web
+2. **Check your network** — ping `sandbox.eupago.pt` or `clientes.eupago.pt`
+3. **Check if eupago is operational** — temporary issues on their side
+4. **Use async** — avoid blocking the main thread in web applications
 
 ```bash
-# Testar conectividade
+# Test connectivity
 curl -v https://sandbox.eupago.pt/api/v1.02/mbway/create
 ```
 
 ---
 
-## Padrao recomendado para error handling
+## Recommended error handling pattern
 
 ```python
 from eupago.exceptions import (
@@ -372,21 +372,21 @@ try:
         phone_number="351#912345678",
     )
 except ValidationError as e:
-    # Parametros invalidos — corrigir no codigo
-    logger.error("Validacao falhou: %s", e.message)
+    # Invalid parameters — fix in your code
+    logger.error("Validation failed: %s", e.message)
 except AuthenticationError:
-    # API key errada — verificar configuracao
-    logger.critical("API key invalida!")
+    # Wrong API key — check configuration
+    logger.critical("Invalid API key!")
 except PaymentError as e:
-    # Pagamento recusado — informar o utilizador
-    logger.warning("Pagamento recusado: %s (code=%s)", e.message, e.error_code)
+    # Payment declined — inform the user
+    logger.warning("Payment declined: %s (code=%s)", e.message, e.error_code)
 except RateLimitError:
-    # Rate limit — esperar e tentar novamente (so GETs)
-    logger.warning("Rate limit atingido")
+    # Rate limit — wait and try again (GETs only)
+    logger.warning("Rate limit reached")
 except NetworkError:
-    # Problema de rede — tentar mais tarde
-    logger.error("Erro de rede")
+    # Network issue — try later
+    logger.error("Network error")
 except EupagoError as e:
-    # Catch-all para outros erros
-    logger.error("Erro inesperado: %s", e.message)
+    # Catch-all for other errors
+    logger.error("Unexpected error: %s", e.message)
 ```
