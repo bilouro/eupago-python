@@ -36,6 +36,9 @@ theme:
   icon:
     repo: fontawesome/brands/github
 
+hooks:
+  - mkdocs_hooks.py
+
 plugins:
   - search:
       lang:

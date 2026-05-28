@@ -9,8 +9,8 @@
 | Pagar com Visa/Mastercard | [Cartão de Crédito](credit-card.md) | Imediato | 3.999 EUR |
 | Apple Wallet | [Apple Pay](apple-pay.md) | Imediato | 99.999 EUR |
 | Google Wallet | [Google Pay](google-pay.md) | Imediato | 99.999 EUR |
-| Cobrar mensalidade automaticamente | [CC Subscription](credit-card.md#subscriptions) | Recorrente | 3.999 EUR |
-| Reservar montante e cobrar depois | [CC Auth + Capture](credit-card.md#auth--capture) | Flexível | 3.999 EUR |
+| Cobrar mensalidade automaticamente | [CC Subscription](credit-card.md#subscricoes) | Recorrente | 3.999 EUR |
+| Reservar montante e cobrar depois | [CC Auth + Capture](credit-card.md#autorizacao-captura) | Flexível | 3.999 EUR |
 
 ## Fluxos comparados
 
