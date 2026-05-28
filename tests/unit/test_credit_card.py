@@ -25,13 +25,14 @@ def client() -> EupagoClient:
 
 @respx.mock
 def test_create_payment_success(client: EupagoClient) -> None:
-    respx.post(CREATE_URL).mock(
+    route = respx.post(CREATE_URL).mock(
         return_value=Response(
-            200,
+            201,
             json={
+                "transactionStatus": "Success",
                 "transactionID": "txn-cc-001",
-                "estado": 0,
-                "redirectUrl": "https://pay.eupago.pt/cc/form-abc",
+                "reference": "306195",
+                "redirectUrl": "https://sandbox.eupago.pt/api/extern/creditcard/form/txn-cc-001",
             },
         )
     )
@@ -41,11 +42,17 @@ def test_create_payment_success(client: EupagoClient) -> None:
         amount=Decimal("99.99"),
         success_url="https://loja.pt/ok",
         error_url="https://loja.pt/fail",
+        back_url="https://loja.pt/back",
     )
 
+    body = json.loads(route.calls[0].request.content)
+    assert body["payment"]["amount"] == {"value": 99.99, "currency": "EUR"}
+    assert body["payment"]["backUrl"] == "https://loja.pt/back"
+
     assert result.transaction_id == "txn-cc-001"
+    assert result.reference == "306195"
     assert result.status == PaymentStatus.PENDING
-    assert result.payment_url == "https://pay.eupago.pt/cc/form-abc"
+    assert result.payment_url.endswith("/creditcard/form/txn-cc-001")
     assert result.method == "credit_card"
 
 
@@ -71,6 +78,7 @@ def test_create_payment_with_all_urls(client: EupagoClient) -> None:
         amount=Decimal("50.00"),
         success_url="https://shop.com/ok",
         error_url="https://shop.com/fail",
+        back_url="https://shop.com/back",
         cancel_url="https://shop.com/cancel",
         callback_url="https://shop.com/webhook",
         description="Premium plan",
@@ -80,6 +88,7 @@ def test_create_payment_with_all_urls(client: EupagoClient) -> None:
     body = json.loads(route.calls[0].request.content)
     assert body["payment"]["successUrl"] == "https://shop.com/ok"
     assert body["payment"]["failUrl"] == "https://shop.com/fail"
+    assert body["payment"]["backUrl"] == "https://shop.com/back"
     assert body["payment"]["cancelUrl"] == "https://shop.com/cancel"
     assert body["payment"]["adminCallback"] == "https://shop.com/webhook"
     assert body["payment"]["description"] == "Premium plan"
@@ -99,7 +108,9 @@ def test_create_payment_validates_max_amount(client: EupagoClient) -> None:
 @respx.mock
 def test_create_payment_error_status(client: EupagoClient) -> None:
     respx.post(CREATE_URL).mock(
-        return_value=Response(200, json={"estado": -1, "resposta": "Error"})
+        return_value=Response(
+            200, json={"transactionStatus": "Rejected", "code": "AMOUNT_MISSING", "text": "Amount"}
+        )
     )
 
     result = client.credit_card.create_payment(order_id="ORD-CC-006", amount=Decimal("10.00"))

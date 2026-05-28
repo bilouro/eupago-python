@@ -94,6 +94,7 @@ The eupago API uses inconsistent names across its two generations. The SDK norma
 | Customer name | `customer_name` | — | `customer.name` | `str` |
 | Success URL | `success_url` | `url_retorno` | `successUrl` | `str` |
 | Error URL | `error_url` | — | `failUrl` | `str` |
+| Back URL | `back_url` | — | `backUrl` | `str` |
 | Callback URL | `callback_url` | — | `adminCallback` | `str` |
 | Description | `description` | — | `payment.description` | `str` |
 | Expiration | `expires_at` | `data_fim` | — | `datetime \| None` |
