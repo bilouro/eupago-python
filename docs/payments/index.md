@@ -6,15 +6,10 @@
 |---|---|---|---|
 | Immediate mobile payment | [MB WAY](mbway.md) | 5 minutes | 99,999 EUR |
 | ATM or online banking reference | [Multibanco](multibanco.md) | 1–30 days | 99,999 EUR |
-| Pay with Visa/Mastercard | [Credit Card](credit-card.md) | Immediate | 3,999 EUR |
-| Apple Wallet | [Apple Pay](apple-pay.md) | Immediate | 99,999 EUR |
-| Google Wallet | [Google Pay](google-pay.md) | Immediate | 99,999 EUR |
-| Automatic monthly charges | [CC Subscription](credit-card.md#subscriptions) | Recurring | 3,999 EUR |
-| Reserve amount, charge later | [CC Auth + Capture](credit-card.md#authorization-capture) | Flexible | 3,999 EUR |
 
 ## Compared flows
 
-### Direct payment (MB WAY, Apple Pay, Google Pay)
+### Direct payment (MB WAY)
 
 ```mermaid
 sequenceDiagram
@@ -40,21 +35,6 @@ sequenceDiagram
     App->>Customer: Show entity/reference
     Customer->>ATM/Bank: Pay with the reference
     eupago->>App: Webhook (PAID)
-```
-
-### Redirect (Credit Card)
-
-```mermaid
-sequenceDiagram
-    participant App
-    participant eupago
-    participant Customer
-    App->>eupago: Create payment
-    eupago-->>App: paymentUrl
-    App->>Customer: Redirect to paymentUrl
-    Customer->>eupago: Fill card details + 3D Secure
-    eupago->>App: Webhook (PAID)
-    eupago->>Customer: Redirect to successUrl
 ```
 
 ## All methods follow the same pattern

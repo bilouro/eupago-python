@@ -90,9 +90,6 @@ nav:
     - Which method to choose?: payments/index.md
     - MB WAY: payments/mbway.md
     - Multibanco: payments/multibanco.md
-    - Credit Card: payments/credit-card.md
-    - Apple Pay: payments/apple-pay.md
-    - Google Pay: payments/google-pay.md
   - Webhooks:
     - Webhooks: webhooks/index.md
     - Signature Verification: webhooks/signature.md
