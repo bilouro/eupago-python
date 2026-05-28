@@ -1,132 +1,151 @@
 # MB WAY
 
-## O que e
+## What it is
 
-MB WAY e um metodo de pagamento movel amplamente utilizado em Portugal. O cliente recebe uma notificacao push no telemovel e tem **5 minutos** para aprovar o pagamento na aplicacao MB WAY. Apos a aprovacao, o pagamento e confirmado em tempo real.
+MB WAY is a mobile payment method widely used in Portugal. When a payment is created, the customer receives a push notification on the MB WAY app and has **5 minutes** to approve or reject the transaction. The merchant is notified of the result via callback.
 
-- **Montante maximo:** 99.999 EUR
-- **Tempo de aprovacao:** 5 minutos
-- **Formato do telemovel:** `"351#912345678"` (indicativo do pais + numero)
+MB WAY supports two flows:
 
-## Diagrama de fluxo
+- **Direct payment** -- a single call that debits the customer immediately upon approval.
+- **Authorization + Capture** -- a two-step flow where the amount is reserved first and captured later, useful for marketplaces or delayed-fulfillment scenarios.
+
+The maximum amount per transaction is **99,999 EUR**.
+
+## Flow diagram
+
+### Direct payment
 
 ```mermaid
 sequenceDiagram
-    participant Comerciante
-    participant EupagoSDK
-    participant EupagoAPI
-    participant MBWAY
-    participant Cliente
+    participant Merchant
+    participant EupagoAPI as Eupago API
+    participant MBWAYApp as MB WAY App
+    participant Customer
 
-    Comerciante->>EupagoSDK: create_payment(phone, amount)
-    EupagoSDK->>EupagoAPI: POST /api/v1.02/mbway/create
-    EupagoAPI->>MBWAY: Solicitar pagamento
-    MBWAY->>Cliente: Notificacao push (5 min)
-    EupagoAPI-->>EupagoSDK: referencia + estado
-    EupagoSDK-->>Comerciante: MBWayResponse
-
-    alt Cliente aprova
-        Cliente->>MBWAY: Aprovar pagamento
-        MBWAY->>EupagoAPI: Confirmacao
-        EupagoAPI->>Comerciante: Callback (sucesso)
-    else Cliente rejeita / timeout
-        MBWAY->>EupagoAPI: Rejeitado / expirado
-        EupagoAPI->>Comerciante: Callback (falha)
-    end
+    Merchant->>EupagoAPI: create_payment(phone_number, amount)
+    EupagoAPI-->>Merchant: transactionId, status "pending"
+    EupagoAPI->>MBWAYApp: Push notification
+    MBWAYApp->>Customer: "Approve payment?"
+    Customer->>MBWAYApp: Approve / Reject
+    MBWAYApp->>EupagoAPI: Customer decision
+    EupagoAPI->>Merchant: Callback (success / failure)
 ```
 
-## Exemplo completo
+### Authorization + Capture
+
+```mermaid
+sequenceDiagram
+    participant Merchant
+    participant EupagoAPI as Eupago API
+    participant MBWAYApp as MB WAY App
+    participant Customer
+
+    Merchant->>EupagoAPI: authorize(phone_number, amount)
+    EupagoAPI-->>Merchant: transactionId, status "pending"
+    EupagoAPI->>MBWAYApp: Push notification
+    MBWAYApp->>Customer: "Authorize payment?"
+    Customer->>MBWAYApp: Approve
+    MBWAYApp->>EupagoAPI: Authorized
+    EupagoAPI->>Merchant: Callback (authorized)
+    Note over Merchant: Later, when ready to charge
+    Merchant->>EupagoAPI: capture(transactionId, amount)
+    EupagoAPI-->>Merchant: status "captured"
+```
+
+## Full example
+
+### Direct payment
 
 ```python
 from decimal import Decimal
 from eupago import EupagoClient
 
-client = EupagoClient(
-    api_key="demo-api-key",
-    sandbox=True,
-)
+client = EupagoClient(api_key="your-api-key")
 
-# Criar pagamento MB WAY
 response = client.mbway.create_payment(
     phone_number="351#912345678",
-    amount=Decimal("25.50"),
-    transaction_key="order-12345",
+    amount=Decimal("25.00"),
+    currency="EUR",
+    order_id="order-1001",
     callback_url="https://example.com/callback",
 )
 
-print(f"Referencia: {response.reference}")
-print(f"Estado: {response.status}")
-print(f"Transacao: {response.transaction_id}")
-
-# Autorizar pagamento (pre-autorizacao)
-auth_response = client.mbway.authorize(
-    phone_number="351#912345678",
-    amount=Decimal("50.00"),
-    transaction_key="order-67890",
-)
-
-print(f"Auth ID: {auth_response.authorization_id}")
-
-# Capturar pagamento pre-autorizado
-capture_response = client.mbway.capture(
-    authorization_id=auth_response.authorization_id,
-    amount=Decimal("50.00"),
-)
-
-print(f"Captura: {capture_response.status}")
+print(response.transaction_id)  # "eupago-xxxx-xxxx"
+print(response.status)           # "pending"
 ```
 
-## Parametros
+### Authorization + Capture
+
+```python
+from decimal import Decimal
+from eupago import EupagoClient
+
+client = EupagoClient(api_key="your-api-key")
+
+# Step 1: Authorize
+auth = client.mbway.authorize(
+    phone_number="351#912345678",
+    amount=Decimal("150.00"),
+    currency="EUR",
+    order_id="order-2002",
+    callback_url="https://example.com/callback",
+)
+
+print(auth.transaction_id)  # "eupago-xxxx-xxxx"
+print(auth.status)           # "pending"
+
+# Step 2: Capture (after customer approves and you are ready to charge)
+capture = client.mbway.capture(
+    transaction_id=auth.transaction_id,
+    amount=Decimal("150.00"),
+)
+
+print(capture.status)  # "captured"
+```
+
+## Parameters
 
 ### `create_payment`
 
-| Parametro         | Tipo      | Obrigatorio | Descricao                                                    |
-| ----------------- | --------- | ----------- | ------------------------------------------------------------ |
-| `phone_number`    | `str`     | Sim         | Numero do telemovel no formato `"351#912345678"`             |
-| `amount`          | `Decimal` | Sim         | Montante a cobrar (max: 99.999 EUR)                          |
-| `transaction_key` | `str`     | Sim         | Identificador unico da transacao no sistema do comerciante   |
-| `callback_url`    | `str`     | Nao         | URL para receber notificacoes de estado do pagamento         |
-| `description`     | `str`     | Nao         | Descricao do pagamento visivel para o cliente                |
+| Parameter      | Type      | Required | Description                                                        |
+|----------------|-----------|----------|--------------------------------------------------------------------|
+| `phone_number` | `str`     | Yes      | Customer phone in `"351#9XXXXXXXX"` format (country code + number) |
+| `amount`       | `Decimal` | Yes      | Amount to charge (max 99,999 EUR)                                  |
+| `currency`     | `str`     | No       | ISO 4217 currency code. Default: `"EUR"`                           |
+| `order_id`     | `str`     | No       | Your internal order identifier                                     |
+| `callback_url` | `str`     | No       | URL to receive the payment result notification                     |
 
 ### `authorize`
 
-| Parametro         | Tipo      | Obrigatorio | Descricao                                                    |
-| ----------------- | --------- | ----------- | ------------------------------------------------------------ |
-| `phone_number`    | `str`     | Sim         | Numero do telemovel no formato `"351#912345678"`             |
-| `amount`          | `Decimal` | Sim         | Montante a pre-autorizar (max: 99.999 EUR)                   |
-| `transaction_key` | `str`     | Sim         | Identificador unico da transacao no sistema do comerciante   |
+| Parameter      | Type      | Required | Description                                                        |
+|----------------|-----------|----------|--------------------------------------------------------------------|
+| `phone_number` | `str`     | Yes      | Customer phone in `"351#9XXXXXXXX"` format (country code + number) |
+| `amount`       | `Decimal` | Yes      | Amount to authorize (max 99,999 EUR)                               |
+| `currency`     | `str`     | No       | ISO 4217 currency code. Default: `"EUR"`                           |
+| `order_id`     | `str`     | No       | Your internal order identifier                                     |
+| `callback_url` | `str`     | No       | URL to receive the authorization result notification               |
 
 ### `capture`
 
-| Parametro          | Tipo      | Obrigatorio | Descricao                                                  |
-| ------------------ | --------- | ----------- | ---------------------------------------------------------- |
-| `authorization_id` | `str`     | Sim         | ID da autorizacao obtido no passo `authorize`              |
-| `amount`           | `Decimal` | Sim         | Montante a capturar (pode ser inferior ao autorizado)      |
+| Parameter        | Type      | Required | Description                                            |
+|------------------|-----------|----------|--------------------------------------------------------|
+| `transaction_id` | `str`     | Yes      | Transaction ID returned by `authorize`                 |
+| `amount`         | `Decimal` | Yes      | Amount to capture (must be <= authorized amount)       |
 
-## Resposta
+## Response
 
-```python
-# Resposta de create_payment
-{
-    "status": "ok",
-    "reference": "MB12345678",
-    "transaction_id": "txn_abc123",
-    "method": "mbway",
-    "amount": "25.50",
-    "currency": "EUR",
-}
-```
+All MB WAY methods return a response object with the following fields:
 
-| Campo            | Tipo  | Descricao                                              |
-| ---------------- | ----- | ------------------------------------------------------ |
-| `status`         | `str` | Estado do pedido: `"ok"` ou `"error"`                  |
-| `reference`      | `str` | Referencia interna do pagamento                        |
-| `transaction_id` | `str` | Identificador unico da transacao na euPago             |
-| `method`         | `str` | Metodo de pagamento utilizado (`"mbway"`)              |
-| `amount`         | `str` | Montante do pagamento                                  |
-| `currency`       | `str` | Moeda (`"EUR"`)                                        |
+| Field              | Type   | Description                                           |
+|--------------------|--------|-------------------------------------------------------|
+| `transaction_id`   | `str`  | Unique Eupago transaction identifier                  |
+| `status`           | `str`  | Current status: `"pending"`, `"captured"`, `"failed"` |
+| `message`          | `str`  | Human-readable status description                     |
+| `method`           | `str`  | Always `"mbway"`                                      |
 
-## Variante async
+## Async variant
+
+All methods are available as coroutines through `AsyncEupagoClient`:
 
 ```python
 import asyncio
@@ -134,36 +153,24 @@ from decimal import Decimal
 from eupago import AsyncEupagoClient
 
 async def main():
-    client = AsyncEupagoClient(
-        api_key="demo-api-key",
-        sandbox=True,
-    )
+    client = AsyncEupagoClient(api_key="your-api-key")
 
     response = await client.mbway.create_payment(
         phone_number="351#912345678",
-        amount=Decimal("25.50"),
-        transaction_key="order-12345",
+        amount=Decimal("25.00"),
+        order_id="order-1001",
         callback_url="https://example.com/callback",
     )
-
-    print(f"Referencia: {response.reference}")
-    print(f"Estado: {response.status}")
-
-    await client.close()
+    print(response.status)
 
 asyncio.run(main())
 ```
 
-## Notas
+## Notes
 
-1. **Formato do numero de telefone:** O numero deve incluir o indicativo do pais separado por `#`. Para Portugal, usar `"351#9XXXXXXXX"`. Outros indicativos sao suportados para clientes MB WAY internacionais.
-
-2. **Tempo limite de 5 minutos:** O cliente tem exatamente 5 minutos para aprovar o pagamento na aplicacao MB WAY. Apos esse periodo, o pagamento expira automaticamente e o callback recebe o estado de falha.
-
-3. **Callbacks:** E altamente recomendado configurar um `callback_url` para receber notificacoes em tempo real sobre o estado do pagamento. Nao dependa apenas de polling.
-
-4. **Pre-autorizacao vs. pagamento direto:** Use `authorize` + `capture` quando precisar de validar o pagamento antes de o confirmar (por exemplo, reservas). Use `create_payment` para cobrar imediatamente.
-
-5. **Montante maximo:** O montante maximo por transacao e de 99.999 EUR. Transacoes acima deste valor serao rejeitadas pela API.
-
-6. **Ambiente sandbox:** Em sandbox, os pagamentos nao sao processados realmente. Use `sandbox=True` durante o desenvolvimento e testes.
+- The phone number **must** follow the format `"351#9XXXXXXXX"` -- the country code, a `#` separator, and the 9-digit phone number.
+- The customer has **5 minutes** to approve or reject the payment on the MB WAY app. If no action is taken, the transaction expires automatically.
+- MB WAY is only available for Portuguese phone numbers (country code `351`).
+- The maximum transaction amount is **99,999 EUR**.
+- When using authorization + capture, the captured amount can be less than or equal to the authorized amount, but never more.
+- Always set up a `callback_url` to receive asynchronous payment notifications, since the customer may approve the payment after your initial request returns.

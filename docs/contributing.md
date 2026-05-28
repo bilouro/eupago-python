@@ -1,8 +1,8 @@
-# Contribuir
+# Contributing
 
-Obrigado pelo interesse em contribuir para o eupago Python SDK!
+Thank you for your interest in contributing to the eupago Python SDK!
 
-## Setup em 3 comandos
+## Setup in 3 commands
 
 ```bash
 git clone https://github.com/bilouro/eupago-python.git && cd eupago-python
@@ -10,33 +10,33 @@ pip install -e ".[dev]"
 pre-commit install
 ```
 
-Isto instala o SDK em modo editavel com todas as dependencias de desenvolvimento (ruff, mypy, pytest, pre-commit).
+This installs the SDK in editable mode with all development dependencies (ruff, mypy, pytest, pre-commit).
 
-## Correr checks
+## Running checks
 
-Todos os checks devem passar antes de cada commit:
+All checks must pass before each commit:
 
-=== "Todos"
+=== "All"
 
     ```bash
     ruff check .          # lint
     ruff format .         # auto-format
     mypy src/             # type check (--strict)
-    pytest                # testes com coverage (≥85% enforced)
+    pytest                # tests with coverage (≥85% enforced)
     ```
 
 === "Lint"
 
     ```bash
     ruff check .
-    ruff check . --fix    # corrigir automaticamente
+    ruff check . --fix    # auto-fix
     ```
 
 === "Format"
 
     ```bash
-    ruff format .                # formatar
-    ruff format --check .        # verificar sem alterar
+    ruff format .                # format
+    ruff format --check .        # check without modifying
     ```
 
 === "Types"
@@ -45,67 +45,67 @@ Todos os checks devem passar antes de cada commit:
     mypy src/                    # strict mode
     ```
 
-=== "Testes"
+=== "Tests"
 
     ```bash
-    pytest                       # todos os testes
-    pytest tests/unit/           # so unit tests
-    pytest -k "test_create"      # por nome
-    pytest -m "not integration"  # excluir integration tests
+    pytest                       # all tests
+    pytest tests/unit/           # unit tests only
+    pytest -k "test_create"      # by name
+    pytest -m "not integration"  # exclude integration tests
     ```
 
-## Como adicionar um novo metodo de pagamento
+## How to add a new payment method
 
-O SDK segue um padrao consistente para cada metodo de pagamento. Consulta o ficheiro `CLAUDE.md` na raiz do projecto para instrucoes detalhadas, incluindo:
+The SDK follows a consistent pattern for each payment method. Refer to the `CLAUDE.md` file at the project root for detailed instructions, including:
 
-1. Criar o ficheiro do servico em `src/eupago/services/`
-2. Seguir o `mbway.py` como implementacao de referencia
-3. Registar no client (`_client.py`)
-4. Adicionar testes em `tests/unit/`
-5. Actualizar `services/__init__.py`
+1. Create the service file in `src/eupago/services/`
+2. Follow `mbway.py` as the reference implementation
+3. Register in the client (`_client.py`)
+4. Add tests in `tests/unit/`
+5. Update `services/__init__.py`
 
-O `CLAUDE.md` tambem contem a tabela de vocabulario unificado (nomes de campos do SDK vs nomes da API eupago) e todas as regras de desenvolvimento.
+`CLAUDE.md` also contains the unified vocabulary table (SDK field names vs eupago API names) and all development rules.
 
 ## Pull Requests
 
-- **Um feature ou fix por PR** — nao mistures funcionalidades diferentes
-- **Inclui testes** para codigo novo — coverage minimo de 85%
-- **Actualiza o CHANGELOG.md** na seccao `[Unreleased]`
-- **Todos os checks CI devem passar** — lint, types, testes (Python 3.9-3.13)
-- Descreve o que mudou e porque no PR body
+- **One feature or fix per PR** — do not mix different functionalities
+- **Include tests** for new code — minimum 85% coverage
+- **Update CHANGELOG.md** under the `[Unreleased]` section
+- **All CI checks must pass** — lint, types, tests (Python 3.9-3.13)
+- Describe what changed and why in the PR body
 
-### Workflow tipico
+### Typical workflow
 
 ```bash
-# 1. Cria um branch
+# 1. Create a branch
 git checkout -b feature/payshop-service
 
-# 2. Desenvolve e testa
+# 2. Develop and test
 pytest tests/unit/test_payshop.py
 
-# 3. Verifica tudo
+# 3. Verify everything
 ruff check . && ruff format --check . && mypy src/ && pytest
 
-# 4. Commit e push
+# 4. Commit and push
 git add .
 git commit -m "Add Payshop payment service"
 git push -u origin feature/payshop-service
 
-# 5. Abre PR no GitHub
+# 5. Open PR on GitHub
 ```
 
-## Convencoes de codigo
+## Code conventions
 
-- **Python ≥3.9** — usa `from __future__ import annotations`, nunca `match/case`
-- **Decimal para dinheiro** — nunca `float`
-- **Type annotations** em todas as funcoes publicas
-- **Docstrings Google style**
-- **`_filename.py`** = modulo interno, **`filename.py`** = API publica
-- **Nao logar PII** — telefones, emails, NIF sao redactados automaticamente
+- **Python >=3.9** — use `from __future__ import annotations`, never `match/case`
+- **Decimal for money** — never `float`
+- **Type annotations** on all public functions
+- **Google style docstrings**
+- **`_filename.py`** = internal module, **`filename.py`** = public API
+- **No PII in logs** — phone numbers, emails, NIF are automatically redacted
 
-## Seguranca
+## Security
 
-Para reportar vulnerabilidades de seguranca, consulta o [SECURITY.md](https://github.com/bilouro/eupago-python/blob/main/SECURITY.md).
+To report security vulnerabilities, see [SECURITY.md](https://github.com/bilouro/eupago-python/blob/main/SECURITY.md).
 
-!!! danger "Nao abras issue publico"
-    Vulnerabilidades de seguranca devem ser reportadas por email privado, nunca num issue publico do GitHub.
+!!! danger "Do not open a public issue"
+    Security vulnerabilities must be reported via private email, never in a public GitHub issue.

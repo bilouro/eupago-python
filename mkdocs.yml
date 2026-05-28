@@ -1,13 +1,13 @@
 site_name: eupago Python SDK
 site_url: https://bilouro.github.io/eupago-python/
-site_description: SDK Python não-oficial para o gateway de pagamentos eupago
+site_description: Unofficial Python SDK for the eupago payment gateway
 repo_url: https://github.com/bilouro/eupago-python
 repo_name: bilouro/eupago-python
 edit_uri: edit/main/docs/
 
 theme:
   name: material
-  language: pt
+  language: en
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -15,14 +15,14 @@ theme:
       accent: indigo
       toggle:
         icon: material/brightness-7
-        name: Mudar para modo escuro
+        name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: indigo
       accent: indigo
       toggle:
         icon: material/brightness-4
-        name: Mudar para modo claro
+        name: Switch to light mode
   features:
     - content.code.copy
     - content.code.annotate
@@ -48,29 +48,28 @@ plugins:
       docs_structure: suffix
       reconfigure_material: true
       languages:
-        - locale: pt
-          default: true
-          name: Português
-          build: true
         - locale: en
+          default: true
           name: English
           build: true
+        - locale: pt
+          name: Português
+          build: true
           site_name: eupago Python SDK
-          site_description: Unofficial Python SDK for the eupago payment gateway
+          site_description: SDK Python não-oficial para o gateway de pagamentos eupago
           nav_translations:
-            Início: Home
-            Começar: Getting Started
-            Instalação e Quickstart: Installation & Quickstart
-            Configuração: Configuration
-            Pagamentos: Payments
-            Qual método escolher?: Which method to choose?
-            Cartão de Crédito: Credit Card
-            Webhooks: Webhooks
-            Verificação de assinatura: Signature Verification
-            Receitas: Recipes
-            Erros e Troubleshooting: Errors & Troubleshooting
-            Referência API: API Reference
-            Contribuir: Contributing
+            Home: Início
+            Getting Started: Começar
+            Installation & Quickstart: Instalação e Quickstart
+            Configuration: Configuração
+            Payments: Pagamentos
+            Which method to choose?: Qual método escolher?
+            Credit Card: Cartão de Crédito
+            Signature Verification: Verificação de assinatura
+            Recipes: Receitas
+            Errors & Troubleshooting: Erros e Troubleshooting
+            API Reference: Referência API
+            Contributing: Contribuir
   - mkdocstrings:
       handlers:
         python:
@@ -83,28 +82,28 @@ plugins:
             docstring_style: google
 
 nav:
-  - Início: index.md
-  - Começar:
-    - Instalação e Quickstart: getting-started/index.md
-    - Configuração: getting-started/configuration.md
-  - Pagamentos:
-    - Qual método escolher?: payments/index.md
+  - Home: index.md
+  - Getting Started:
+    - Installation & Quickstart: getting-started/index.md
+    - Configuration: getting-started/configuration.md
+  - Payments:
+    - Which method to choose?: payments/index.md
     - MB WAY: payments/mbway.md
     - Multibanco: payments/multibanco.md
-    - Cartão de Crédito: payments/credit-card.md
+    - Credit Card: payments/credit-card.md
     - Apple Pay: payments/apple-pay.md
     - Google Pay: payments/google-pay.md
   - Webhooks:
     - Webhooks: webhooks/index.md
-    - Verificação de assinatura: webhooks/signature.md
-  - Receitas:
-    - Receitas: recipes/index.md
+    - Signature Verification: webhooks/signature.md
+  - Recipes:
+    - Recipes: recipes/index.md
     - FastAPI: recipes/fastapi.md
     - Django: recipes/django.md
     - Flask: recipes/flask.md
-  - Erros e Troubleshooting: errors/index.md
-  - Referência API: api/index.md
-  - Contribuir: contributing.md
+  - Errors & Troubleshooting: errors/index.md
+  - API Reference: api/index.md
+  - Contributing: contributing.md
 
 markdown_extensions:
   - admonition
