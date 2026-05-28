@@ -15,15 +15,15 @@ def verify_signature(payload: bytes, signature: str, secret: str) -> None:
 
 def decrypt_payload(encrypted_data: str, secret: str, iv_b64: str) -> bytes:
     try:
-        from cryptography.hazmat.primitives.ciphers import (  # type: ignore[import-not-found]
+        from cryptography.hazmat.primitives.ciphers import (
             Cipher,
             algorithms,
             modes,
         )
-        from cryptography.hazmat.primitives.padding import PKCS7  # type: ignore[import-not-found]
+        from cryptography.hazmat.primitives.padding import PKCS7
     except ImportError:
         raise DecryptionError(
-            "Install 'cryptography' package to handle encrypted webhooks: pip install cryptography"
+            "Encrypted webhooks require the 'cryptography' package: pip install eupago[crypto]"
         ) from None
 
     try:
