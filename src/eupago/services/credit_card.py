@@ -21,10 +21,12 @@ def _build_payment_body(
     order_id: str,
     amount: Decimal,
     *,
+    currency: str = "EUR",
     customer: Customer | None = None,
     description: str | None = None,
     success_url: str | None = None,
     error_url: str | None = None,
+    back_url: str | None = None,
     cancel_url: str | None = None,
     callback_url: str | None = None,
     language: str = "PT",
@@ -33,7 +35,7 @@ def _build_payment_body(
         raise ValidationError(f"Amount must be between 0.01 and {_MAX_AMOUNT}")
 
     payment: dict[str, Any] = {
-        "amount": float(amount),
+        "amount": {"value": float(amount), "currency": currency},
         "identifier": order_id,
         "lang": language,
     }
@@ -43,6 +45,8 @@ def _build_payment_body(
         payment["successUrl"] = success_url
     if error_url:
         payment["failUrl"] = error_url
+    if back_url:
+        payment["backUrl"] = back_url
     if cancel_url:
         payment["cancelUrl"] = cancel_url
     if callback_url:
@@ -61,23 +65,28 @@ def _build_payment_body(
     return body
 
 
+def _is_success(data: dict[str, Any]) -> bool:
+    return data.get("transactionStatus") == "Success" or data.get("estado") == 0
+
+
 def _parse_response(
     data: dict[str, Any],
     order_id: str,
     amount: Decimal,
     status: PaymentStatus = PaymentStatus.PENDING,
 ) -> PaymentResult:
-    transaction_id = data.get("transactionID") or data.get("referencia")
+    transaction_id = data.get("transactionID")
+    reference = data.get("reference")
     payment_url = data.get("redirectUrl") or data.get("paymentUrl")
-    estado = data.get("estado", 0)
 
-    if isinstance(estado, int) and estado != 0:
+    if not _is_success(data):
         status = PaymentStatus.ERROR
 
     return PaymentResult(
         order_id=order_id,
         amount=amount,
-        transaction_id=str(transaction_id) if transaction_id else None,
+        transaction_id=str(transaction_id) if transaction_id is not None else None,
+        reference=str(reference) if reference is not None else None,
         status=status,
         payment_url=payment_url,
         method="credit_card",
@@ -91,10 +100,12 @@ class CreditCardService(BaseService):
         order_id: str,
         amount: Decimal,
         *,
+        currency: str = "EUR",
         customer: Customer | None = None,
         description: str | None = None,
         success_url: str | None = None,
         error_url: str | None = None,
+        back_url: str | None = None,
         cancel_url: str | None = None,
         callback_url: str | None = None,
         language: str = "PT",
@@ -102,10 +113,12 @@ class CreditCardService(BaseService):
         body = _build_payment_body(
             order_id,
             amount,
+            currency=currency,
             customer=customer,
             description=description,
             success_url=success_url,
             error_url=error_url,
+            back_url=back_url,
             cancel_url=cancel_url,
             callback_url=callback_url,
             language=language,
@@ -118,10 +131,12 @@ class CreditCardService(BaseService):
         order_id: str,
         amount: Decimal,
         *,
+        currency: str = "EUR",
         customer: Customer | None = None,
         description: str | None = None,
         success_url: str | None = None,
         error_url: str | None = None,
+        back_url: str | None = None,
         cancel_url: str | None = None,
         callback_url: str | None = None,
         language: str = "PT",
@@ -129,10 +144,12 @@ class CreditCardService(BaseService):
         body = _build_payment_body(
             order_id,
             amount,
+            currency=currency,
             customer=customer,
             description=description,
             success_url=success_url,
             error_url=error_url,
+            back_url=back_url,
             cancel_url=cancel_url,
             callback_url=callback_url,
             language=language,
@@ -145,17 +162,21 @@ class CreditCardService(BaseService):
         order_id: str,
         amount: Decimal,
         *,
+        currency: str = "EUR",
         customer: Customer | None = None,
         success_url: str | None = None,
         error_url: str | None = None,
+        back_url: str | None = None,
         callback_url: str | None = None,
     ) -> PaymentResult:
         body = _build_payment_body(
             order_id,
             amount,
+            currency=currency,
             customer=customer,
             success_url=success_url,
             error_url=error_url,
+            back_url=back_url,
             callback_url=callback_url,
         )
         response = self._request("POST", _PATH_AUTHORIZE, json=body)
@@ -166,17 +187,21 @@ class CreditCardService(BaseService):
         order_id: str,
         amount: Decimal,
         *,
+        currency: str = "EUR",
         customer: Customer | None = None,
         success_url: str | None = None,
         error_url: str | None = None,
+        back_url: str | None = None,
         callback_url: str | None = None,
     ) -> PaymentResult:
         body = _build_payment_body(
             order_id,
             amount,
+            currency=currency,
             customer=customer,
             success_url=success_url,
             error_url=error_url,
+            back_url=back_url,
             callback_url=callback_url,
         )
         response = await self._request_async("POST", _PATH_AUTHORIZE, json=body)
@@ -186,10 +211,9 @@ class CreditCardService(BaseService):
         path = f"{_PATH_CAPTURE}/{transaction_id}"
         response = self._request("POST", path, json={})
         data = response.json()
-        estado = data.get("estado", -1)
         return PaymentResult(
             transaction_id=transaction_id,
-            status=PaymentStatus.PAID if estado == 0 else PaymentStatus.ERROR,
+            status=PaymentStatus.PAID if _is_success(data) else PaymentStatus.ERROR,
             method="credit_card",
             raw_response=data,
         )
@@ -198,10 +222,9 @@ class CreditCardService(BaseService):
         path = f"{_PATH_CAPTURE}/{transaction_id}"
         response = await self._request_async("POST", path, json={})
         data = response.json()
-        estado = data.get("estado", -1)
         return PaymentResult(
             transaction_id=transaction_id,
-            status=PaymentStatus.PAID if estado == 0 else PaymentStatus.ERROR,
+            status=PaymentStatus.PAID if _is_success(data) else PaymentStatus.ERROR,
             method="credit_card",
             raw_response=data,
         )
@@ -211,17 +234,21 @@ class CreditCardService(BaseService):
         order_id: str,
         amount: Decimal,
         *,
+        currency: str = "EUR",
         customer: Customer | None = None,
         success_url: str | None = None,
         error_url: str | None = None,
+        back_url: str | None = None,
         callback_url: str | None = None,
     ) -> PaymentResult:
         body = _build_payment_body(
             order_id,
             amount,
+            currency=currency,
             customer=customer,
             success_url=success_url,
             error_url=error_url,
+            back_url=back_url,
             callback_url=callback_url,
         )
         response = self._request("POST", _PATH_SUBSCRIPTION, json=body)
@@ -232,17 +259,21 @@ class CreditCardService(BaseService):
         order_id: str,
         amount: Decimal,
         *,
+        currency: str = "EUR",
         customer: Customer | None = None,
         success_url: str | None = None,
         error_url: str | None = None,
+        back_url: str | None = None,
         callback_url: str | None = None,
     ) -> PaymentResult:
         body = _build_payment_body(
             order_id,
             amount,
+            currency=currency,
             customer=customer,
             success_url=success_url,
             error_url=error_url,
+            back_url=back_url,
             callback_url=callback_url,
         )
         response = await self._request_async("POST", _PATH_SUBSCRIPTION, json=body)
@@ -254,9 +285,10 @@ class CreditCardService(BaseService):
         order_id: str,
         amount: Decimal,
         *,
+        currency: str = "EUR",
         customer: Customer | None = None,
     ) -> PaymentResult:
-        body = _build_payment_body(order_id, amount, customer=customer)
+        body = _build_payment_body(order_id, amount, currency=currency, customer=customer)
         path = f"{_PATH_SUBSCRIPTION_PAYMENT}/{recurrent_id}"
         response = self._request("POST", path, json=body)
         return _parse_response(response.json(), order_id, amount)
@@ -267,9 +299,10 @@ class CreditCardService(BaseService):
         order_id: str,
         amount: Decimal,
         *,
+        currency: str = "EUR",
         customer: Customer | None = None,
     ) -> PaymentResult:
-        body = _build_payment_body(order_id, amount, customer=customer)
+        body = _build_payment_body(order_id, amount, currency=currency, customer=customer)
         path = f"{_PATH_SUBSCRIPTION_PAYMENT}/{recurrent_id}"
         response = await self._request_async("POST", path, json=body)
         return _parse_response(response.json(), order_id, amount)
