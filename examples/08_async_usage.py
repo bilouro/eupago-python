@@ -30,14 +30,6 @@ async def main() -> None:
         )
         print(f"Multibanco: {ref.entity} / {ref.reference}")
 
-        # Credit Card async
-        cc = await client.credit_card.create_payment_async(
-            order_id="ASYNC-003",
-            amount=Decimal("99.99"),
-            success_url="https://loja.pt/ok",
-        )
-        print(f"Cartão: {cc.payment_url}")
-
         # Múltiplos pagamentos em paralelo
         results = await asyncio.gather(
             client.mbway.create_payment_async(

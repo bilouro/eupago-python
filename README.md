@@ -8,7 +8,7 @@
 [![Docs](https://img.shields.io/badge/docs-bilouro.github.io-blue)](https://bilouro.github.io/eupago-python/)
 
 The first Python SDK for [eupago](https://www.eupago.com), Portugal's payment gateway.
-Multibanco, MB WAY, Credit Card, Apple Pay, Google Pay, and more — in 5 lines of Python.
+MB WAY, Multibanco, and more — in 5 lines of Python.
 
 **[Documentation (PT/EN)](https://bilouro.github.io/eupago-python/)** | [Examples](examples/) | [API Reference](https://bilouro.github.io/eupago-python/api/)
 
@@ -146,9 +146,6 @@ client.set_audit_hook(
 |---|---|---|
 | MB WAY | Available | `client.mbway` |
 | Multibanco | Coming soon | `client.multibanco` |
-| Credit Card | Coming soon | `client.credit_card` |
-| Apple Pay | Coming soon | `client.apple_pay` |
-| Google Pay | Coming soon | `client.google_pay` |
 | Direct Debit | Coming soon | `client.direct_debit` |
 | Payshop | Coming soon | `client.payshop` |
 | Cofidis Pay | Coming soon | `client.cofidis` |

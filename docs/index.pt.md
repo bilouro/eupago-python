@@ -33,9 +33,6 @@ print(payment.status)          # PaymentStatus.PENDING
 |---|---|---|
 | **MB WAY** | Pagamento via telemóvel (aprovação em 5 min) | `client.mbway` |
 | **Multibanco** | Referência para ATM ou homebanking | `client.multibanco` |
-| **Cartão de Crédito** | Visa/Mastercard com 3D Secure | `client.credit_card` |
-| **Apple Pay** | Pagamento Apple Wallet | `client.apple_pay` |
-| **Google Pay** | Pagamento Google Wallet | `client.google_pay` |
 
 ## Porquê este SDK?
 
