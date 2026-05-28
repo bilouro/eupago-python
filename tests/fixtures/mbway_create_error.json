@@ -1,4 +1,5 @@
 {
-  "estado": -10,
-  "resposta": "Invalid API Key"
+  "transactionStatus": "Rejected",
+  "code": "APIKEY_MISSING",
+  "text": "API Key was not available in the request"
 }

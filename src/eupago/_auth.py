@@ -12,7 +12,7 @@ class ApiKeyAuth:
         self.api_key = api_key
 
     def apply_header(self, headers: dict[str, str]) -> dict[str, str]:
-        return {**headers, "ApiKey": self.api_key}
+        return {**headers, "Authorization": f"ApiKey {self.api_key}"}
 
     def apply_body(self, body: dict[str, Any]) -> dict[str, Any]:
         return {**body, "chave": self.api_key}

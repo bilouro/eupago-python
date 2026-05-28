@@ -44,7 +44,7 @@ def test_service_header_auth(transport: HttpTransport, auth: ApiKeyAuth) -> None
     service = BaseService(transport, auth)
     service._request("POST", "/test", json={"data": "x"})
 
-    assert route.calls[0].request.headers["apikey"] == "test-key"
+    assert route.calls[0].request.headers["authorization"] == "ApiKey test-key"
 
 
 def test_service_oauth_without_credentials_raises(
@@ -77,7 +77,7 @@ async def test_service_async_header_auth(transport: HttpTransport, auth: ApiKeyA
     service = BaseService(transport, auth)
     await service._request_async("POST", "/test", json={"x": 1})
 
-    assert route.calls[0].request.headers["apikey"] == "test-key"
+    assert route.calls[0].request.headers["authorization"] == "ApiKey test-key"
     await transport.aclose()
 
 

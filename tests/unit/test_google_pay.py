@@ -51,7 +51,7 @@ def test_create_payment_sends_api_key_header(client: EupagoClient) -> None:
 
     client.google_pay.create_payment(order_id="ORD-GP-002", amount=Decimal("10.00"))
 
-    assert route.calls[0].request.headers["apikey"] == "test-0000-0000-0000-0000"
+    assert route.calls[0].request.headers["authorization"] == "ApiKey test-0000-0000-0000-0000"
 
 
 @respx.mock

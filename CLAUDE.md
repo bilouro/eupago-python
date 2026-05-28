@@ -83,13 +83,13 @@ The eupago API uses inconsistent names across its two generations. The SDK norma
 
 | Concept | SDK name | eupago legacy | eupago v1.02 | Python type |
 |---|---|---|---|---|
-| Amount | `amount` | `valor` | `payment.amount` | `Decimal` |
-| Currency | `currency` | — | — | `str` (default `"EUR"`) |
+| Amount | `amount` | `valor` | `payment.amount.value` | `Decimal` |
+| Currency | `currency` | — | `payment.amount.currency` | `str` (default `"EUR"`) |
 | Order ID | `order_id` | `id` | `payment.identifier` | `str` |
 | Reference | `reference` | `referencia` | `reference` | `str` |
 | Entity | `entity` | `entidade` | `entity` | `str` |
 | Transaction ID | `transaction_id` | `transacao` | `transactionID` | `str` |
-| Phone number | `phone_number` | — | `alias` | `str` |
+| Phone number | `phone_number` | — | `payment.customerPhone` (9 digits, no country prefix) | `str` |
 | Email | `email` | `email` | `customer.email` | `str` |
 | Customer name | `customer_name` | — | `customer.name` | `str` |
 | Success URL | `success_url` | `url_retorno` | `successUrl` | `str` |
@@ -128,7 +128,7 @@ eupago uses three auth methods depending on the endpoint:
 
 | Endpoint type | Auth method | How the SDK handles it |
 |---|---|---|
-| Modern v1.02 (`/api/v1.02/...`) | `ApiKey xxxx` header | `BaseService._default_auth = "header"` |
+| Modern v1.02 (`/api/v1.02/...`) | `Authorization: ApiKey xxxx` header | `BaseService._default_auth = "header"` |
 | Legacy (`/clientes/rest_api/...`) | `chave` in request body | Service sets `auth="body"` in `_request()` |
 | Management (`/api/management/v1.02/...`) | `Bearer <token>` header | Service sets `auth="oauth"` in `_request()` |
 
@@ -307,7 +307,7 @@ Add the import.
 - Auth: `/api/auth/token`
 
 ### Authentication
-- **ApiKey header**: `ApiKey xxxx-xxxx-xxxx-xxxx-xxxx` (most v1.02 endpoints)
+- **ApiKey header**: `Authorization: ApiKey xxxx-xxxx-xxxx-xxxx-xxxx` (most v1.02 endpoints — the `ApiKey ` prefix is part of the `Authorization` value, NOT a header named `ApiKey`)
 - **Body auth**: `{"chave": "xxxx-xxxx-xxxx-xxxx-xxxx", ...}` (Multibanco, Payshop, Paysafecard)
 - **OAuth Bearer**: `Authorization: Bearer <token>` (management endpoints)
 

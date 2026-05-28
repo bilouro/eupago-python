@@ -6,6 +6,7 @@ from httpx import Response
 
 from eupago._http import HttpTransport
 from eupago.exceptions import (
+    ApiError,
     AuthenticationError,
     NotFoundError,
     ServiceUnavailableError,
@@ -44,6 +45,26 @@ def test_401_raises_authentication_error(transport: HttpTransport) -> None:
     )
     with pytest.raises(AuthenticationError, match="Invalid key"):
         transport.request("GET", "/test")
+
+
+@respx.mock
+def test_string_error_code_does_not_crash(transport: HttpTransport) -> None:
+    # eupago v1.02 returns string codes (e.g. "APIKEY_MISSING") and the message in "text"
+    respx.post("https://sandbox.eupago.pt/test").mock(
+        return_value=Response(
+            400,
+            json={
+                "transactionStatus": "Rejected",
+                "code": "APIKEY_MISSING",
+                "text": "API Key was not available in the request",
+            },
+        )
+    )
+    with pytest.raises(ApiError) as exc_info:
+        transport.request("POST", "/test", json={"x": 1})
+
+    assert exc_info.value.error_code == "APIKEY_MISSING"
+    assert "API Key was not available" in exc_info.value.message
 
 
 @respx.mock
