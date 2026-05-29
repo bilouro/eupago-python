@@ -43,6 +43,20 @@ class RefundService(BaseService):
     Requires OAuth credentials (``client_id`` + ``client_secret`` on the
     ``EupagoClient``). The same secret pair gates every ``/api/management/...``
     endpoint.
+
+    **Getting the OAuth credentials:** these are NOT the API key and are not
+    self-service in the backoffice. As of writing, eupago issues
+    ``client_id`` / ``client_secret`` on request via their support portal
+    (`customer.support.eupago.com <https://customer.support.eupago.com>`_).
+    The ``/api/auth/token`` endpoint accepts ``grant_type=client_credentials``
+    (preferred) or ``grant_type=password`` (with the backoffice
+    username/password) — both still require the ``client_id`` / ``client_secret``
+    pair.
+
+    **No refund webhook:** the eupago docs state explicitly that there are no
+    webhook notifications for refunded transactions. Verify the refund via the
+    response itself (``status == PaymentStatus.REFUNDED``) and, if you need a
+    second source of truth, by polling the management transactions endpoint.
     """
 
     _default_auth: str = "oauth"
