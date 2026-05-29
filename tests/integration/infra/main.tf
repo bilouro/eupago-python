@@ -3,6 +3,7 @@ terraform {
   required_providers {
     aws     = { source = "hashicorp/aws", version = "~> 5.0" }
     archive = { source = "hashicorp/archive", version = "~> 2.4" }
+    null    = { source = "hashicorp/null", version = "~> 3.2" }
   }
 }
 
@@ -12,10 +13,22 @@ provider "aws" {
   region = var.region
 }
 
+resource "null_resource" "build_lambda_package" {
+  triggers = {
+    handler      = filemd5("${path.module}/handler.py")
+    requirements = filemd5("${path.module}/requirements.txt")
+    build_script = filemd5("${path.module}/build.sh")
+  }
+  provisioner "local-exec" {
+    command = "${path.module}/build.sh ${path.module}"
+  }
+}
+
 data "archive_file" "fn" {
   type        = "zip"
-  source_file = "${path.module}/handler.py"
-  output_path = "${path.module}/.build/handler.zip"
+  source_dir  = "${path.module}/.build/package"
+  output_path = "${path.module}/.build/fn.zip"
+  depends_on  = [null_resource.build_lambda_package]
 }
 
 resource "aws_dynamodb_table" "captures" {
@@ -74,10 +87,13 @@ resource "aws_lambda_function" "receiver" {
   timeout          = 10
 
   environment {
-    variables = {
-      WEBHOOK_TABLE    = aws_dynamodb_table.captures.name
-      WEBHOOK_TTL_DAYS = tostring(var.ttl_days)
-    }
+    variables = merge(
+      {
+        WEBHOOK_TABLE    = aws_dynamodb_table.captures.name
+        WEBHOOK_TTL_DAYS = tostring(var.ttl_days)
+      },
+      var.webhook_secret != "" ? { WEBHOOK_SECRET = var.webhook_secret } : {},
+    )
   }
 }
 
