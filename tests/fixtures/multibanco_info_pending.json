@@ -1,8 +1,12 @@
 {
   "estado": 0,
-  "entidade": 11249,
-  "referencia": 999888777,
-  "valor": 49.90,
-  "id": "ORD-001",
-  "data_pagamento": null
+  "entidade": "12345",
+  "referencia": "999888777",
+  "identificador": "ORD-001",
+  "estado_referencia": "pendente",
+  "data_criacao": "2026-05-26",
+  "hora_criacao": "14:00:00",
+  "arquivada": false,
+  "sucesso": true,
+  "resposta": "OK"
 }

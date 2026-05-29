@@ -148,9 +148,12 @@ def test_get_info_paid(client: EupagoClient) -> None:
                 "estado": 0,
                 "entidade": 11249,
                 "referencia": 999888777,
-                "valor": 49.90,
-                "id": "ORD-001",
-                "data_pagamento": "2026-05-27 10:30:00",
+                "identificador": "ORD-001",
+                "estado_referencia": "paga",
+                "pagamentos": [
+                    {"trid": 78901, "estado": "paga", "valor": "49.90000", "comissao": "0.68000"}
+                ],
+                "sucesso": True,
             },
         )
     )
@@ -161,6 +164,7 @@ def test_get_info_paid(client: EupagoClient) -> None:
     assert result.reference == "999888777"
     assert result.entity == "11249"
     assert result.amount == Decimal("49.90")
+    assert result.transaction_id == "78901"
     assert result.order_id == "ORD-001"
 
 
@@ -173,9 +177,9 @@ def test_get_info_pending(client: EupagoClient) -> None:
                 "estado": 0,
                 "entidade": 11249,
                 "referencia": 999888777,
-                "valor": 49.90,
-                "id": "ORD-001",
-                "data_pagamento": None,
+                "identificador": "ORD-001",
+                "estado_referencia": "pendente",
+                "sucesso": True,
             },
         )
     )
@@ -241,8 +245,8 @@ async def test_get_info_async(client: EupagoClient) -> None:
                 "estado": 0,
                 "entidade": 11249,
                 "referencia": 555666777,
-                "valor": 30.0,
-                "data_pagamento": "2026-05-27 12:00:00",
+                "estado_referencia": "paga",
+                "pagamentos": [{"trid": 90123, "estado": "paga", "valor": "30.00000"}],
             },
         )
     )
