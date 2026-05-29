@@ -34,8 +34,12 @@ def parse_v1(params: dict[str, str]) -> WebhookEvent:
 
 
 def parse_v2(body: dict[str, Any]) -> WebhookEvent:
-    tx = body.get("transactions", body)
+    # Real eupago v2.0 wraps fields in "transaction" (singular); keep "transactions"
+    # and the bare body as fallbacks.
+    tx = body.get("transaction") or body.get("transactions") or body
     amount_obj = tx.get("amount", {})
+    fees_obj = tx.get("fees", {})
+    channel = body.get("channel", {})
 
     method_raw = tx.get("method", "")
     status_raw = tx.get("status", "Paid")
@@ -52,14 +56,8 @@ def parse_v2(body: dict[str, Any]) -> WebhookEvent:
         status=normalize_status(status_raw),
         method=normalize_method(method_raw) if method_raw else None,
         paid_at=tx.get("date"),
-        channel=(
-            body.get("channel", {}).get("name") if isinstance(body.get("channel"), dict) else None
-        ),
-        fee=_safe_decimal(
-            body.get("transactions", {}).get("fees", {}).get("value")
-            if isinstance(body.get("transactions", {}).get("fees"), dict)
-            else None
-        ),
+        channel=channel.get("name") if isinstance(channel, dict) else None,
+        fee=_safe_decimal(fees_obj.get("value") if isinstance(fees_obj, dict) else None),
     )
 
 

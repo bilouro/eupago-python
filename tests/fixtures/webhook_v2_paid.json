@@ -1,16 +1,15 @@
 {
-  "transactions": {
-    "entity": 12345,
-    "reference": 999888777,
+  "channel": { "account": "demo-account", "name": "demo-channel" },
+  "transaction": {
+    "entity": "12345",
+    "reference": "999888777",
     "identifier": "ORD-2026-001",
-    "method": "Mbway",
-    "amount": { "value": 49.90, "currency": "EUR" },
-    "fees": { "value": 0.35, "currency": "EUR" },
-    "date": "2026-05-26T14:30:00Z",
-    "trid": 78901,
-    "status": "Paid"
-  },
-  "channel": {
-    "name": "main-channel"
+    "method": "PC:PT",
+    "amount": { "value": "49.90000", "currency": "EUR" },
+    "fees": { "value": 0.8364, "currency": "EUR" },
+    "date": "2026-05-26T14:30:00",
+    "trid": "78901",
+    "status": "Paid",
+    "local": "demo"
   }
 }

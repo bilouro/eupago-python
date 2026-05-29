@@ -315,17 +315,22 @@ Add the import.
 `0` = success, `-7` = inactive service, `-8` = invalid reference, `-9` = wrong values, `-10` = invalid key, `-11` = payment not found, `-12` = invalid alias
 
 ### Webhook v2.0 Format
+
+Verified against the real sandbox (note: `transaction` is **singular**; values are
+often strings). Signature header `X-Signature` is **`base64(HMAC-SHA256(raw_body, webhook_secret))`**
+(NOT hex). The HMAC key is the channel's "Chave Criptográfica".
+
 ```json
 {
-  "transactions": {
-    "entity": 12345, "reference": 999888777,
-    "identifier": "ORD-001", "method": "Mbway",
-    "amount": {"value": 49.90, "currency": "EUR"},
-    "fees": {"value": 0.35, "currency": "EUR"},
-    "date": "2026-05-26T14:30:00Z",
-    "trid": 78901, "status": "Paid"
-  },
-  "channel": {"name": "main-channel"}
+  "channel": {"account": "demo-account", "name": "demo-channel"},
+  "transaction": {
+    "entity": "12345", "reference": "999888777",
+    "identifier": "ORD-001", "method": "PC:PT",
+    "amount": {"value": "49.90000", "currency": "EUR"},
+    "fees": {"value": 0.8364, "currency": "EUR"},
+    "date": "2026-05-26T14:30:00",
+    "trid": "78901", "status": "Paid", "local": "demo"
+  }
 }
 ```
 
