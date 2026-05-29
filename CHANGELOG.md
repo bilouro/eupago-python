@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **MB WAY**: `create_payment`, `authorize`, `capture` (sync + async). Live-verified against the eupago sandbox.
 - **Multibanco**: `create_reference`, `get_info` (sync + async). Live-verified, including the paid `info` response.
+- **Credit Card**: `create_payment`, `authorize`, `capture`, `create_subscription`, `charge_subscription` (sync + async). `create` live-verified against the sandbox; full 3D-Secure paid flow uses the official test card (`4018810000150015`, OTP `0101`) and is documented but not yet driven by an automated test (Playwright is the next step).
 - **`EupagoClient(webhook_secret=...)`** and a **`client.webhooks.parse(body, headers)`** namespace (Stripe-style configuration on the client; the module-level `parse_webhook` stays as the escape hatch).
 - **Encrypted webhook support** (AES-256-CBC) — auto-detected from `X-Initialization-Vector` and the `{"data": "..."}` body shape, validated end-to-end against a real encrypted payload from the sandbox. New `crypto` extra (`pip install eupago[crypto]`).
 - `currency` parameter on MB WAY create/authorize (defaults to `EUR`).

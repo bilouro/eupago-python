@@ -25,6 +25,7 @@ as Paid in the sandbox backoffice and validates the captured webhook):
 |---|---|
 | **MB WAY** — `create_payment`, `authorize`, `capture` (sync + async) | ✅ Live-validated |
 | **Multibanco** — `create_reference`, `get_info` (sync + async) | ✅ Live-validated |
+| **Credit Card** — `create_payment`, `authorize`, `capture`, `create_subscription`, `charge_subscription` (sync + async) | ✅ `create` live-validated; the rest mirrors the same v1.02 contract |
 | **Webhooks 2.0** — POST, HMAC signature, both cleartext **and** AES-256-CBC encrypted | ✅ Live-validated |
 | **Webhooks 1.0** — legacy GET | ✅ Implemented |
 | Core: typed errors, retries, sync+async, audit hook, PII redaction | ✅ |

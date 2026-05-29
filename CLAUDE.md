@@ -94,6 +94,7 @@ The eupago API uses inconsistent names across its two generations. The SDK norma
 | Customer name | `customer_name` | — | `customer.name` | `str` |
 | Success URL | `success_url` | `url_retorno` | `successUrl` | `str` |
 | Error URL | `error_url` | — | `failUrl` | `str` |
+| Back URL | `back_url` | — | `backUrl` | `str` |
 | Callback URL | `callback_url` | — | `adminCallback` | `str` |
 | Description | `description` | — | `payment.description` | `str` |
 | Expiration | `expires_at` | `data_fim` | — | `datetime \| None` |
@@ -378,8 +379,8 @@ The HMAC key is the channel's "Chave Criptográfica" used as **UTF-8 bytes**.
 | Version | Scope | Status |
 |---|---|---|
 | **v0.1.0** | MB WAY + webhooks + core | **Done** |
-| v0.2.0 | Multibanco | Next |
-| v0.3.0 | Credit Card + Apple/Google Pay | — |
+| **v0.2.0** | Multibanco | **Done** |
+| v0.3.0 | Credit Card (Done) + Apple/Google Pay | In progress |
 | v0.4.0 | Direct Debit + Refunds (OAuth) | — |
 | v0.5.0 | Payshop, Cofidis, Floa, PIX, PayByLink, Pagaqui | — |
 | v0.6.0 | Webhook docs/recipes only — `parse_webhook` stays the public API; **no framework adapters** (keeps the SDK framework-agnostic, like Stripe/Mollie) | — |
