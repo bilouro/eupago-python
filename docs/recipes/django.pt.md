@@ -184,7 +184,7 @@ python manage.py runserver
 ```bash
 curl -X POST http://localhost:8000/payments/mbway/ \
   -H "Content-Type: application/json" \
-  -d '{"order_id": "ORD-001", "amount": "49.90", "phone_number": "351#912345678"}'
+  -d '{"order_id": "ORD-001", "amount": "49.90", "phone_number": "912345678"}'
 ```
 
 ### Simular webhook v2.0

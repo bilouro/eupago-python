@@ -10,7 +10,7 @@ Fluxo:
 
 from decimal import Decimal
 
-from eupago import EupagoClient, PaymentStatus
+from eupago import EupagoClient
 from eupago.models import Customer
 
 # 1. Criar o client (sandbox para testes)
@@ -23,8 +23,8 @@ client = EupagoClient(
 payment = client.mbway.create_payment(
     order_id="ORD-2026-001",
     amount=Decimal("49.90"),
-    phone_number="351#912345678",  # Formato: 351#9XXXXXXXX
-    description="Encomenda #001",        # Opcional
+    phone_number="912345678",  # 9 digits (PT MB WAY number)
+    description="Encomenda #001",  # Opcional
     customer=Customer(email="cliente@email.com"),  # Opcional
 )
 
