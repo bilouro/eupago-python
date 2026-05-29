@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Refunds**: `client.refunds.refund` (sync + async). OAuth-authenticated against `/api/management/v1.02/refund/{trid}`; live verification requires `client_id` / `client_secret` on the channel and a paid transaction to refund. Per the eupago docs, **refunds do not fire webhooks** — verify via the response or the management transactions endpoint. OAuth credentials are issued by eupago support on request (customer.support.eupago.com); they are not the API key and are not self-service in the backoffice.
 - **Apple Pay**: `client.apple_pay.create_payment` (sync + async). Forwards the `PKPaymentToken` from Apple Wallet to `payment.applePayToken`; same verified v1.02 body shape as credit card. Live verification needs a real Wallet-enabled device.
 - **Google Pay**: `client.google_pay.create_payment` (sync + async). Same pattern with `googlePayToken`. Live verification needs a real Google Pay-enabled device.
+- **Pay By Link**: `client.pay_by_link.create_payment` (sync + async). Generates an eupago-hosted checkout URL where the customer picks the payment method (MB WAY, Multibanco, Card, Apple/Google Pay, Cofidis…). Supports optional `expires_at`, `shipping`, `products` line items, and `customer` notification. Body shape verified against the v1.02 reference and live against the sandbox (`tests/integration/test_pay_by_link_live.py`).
 - New `e2e` optional extra (`pip install eupago[e2e]`) — Playwright dep for the headless 3DS test.
 - **`EupagoClient(webhook_secret=...)`** and a **`client.webhooks.parse(body, headers)`** namespace (Stripe-style configuration on the client; the module-level `parse_webhook` stays as the escape hatch).
 - **Encrypted webhook support** (AES-256-CBC) — auto-detected from `X-Initialization-Vector` and the `{"data": "..."}` body shape, validated end-to-end against a real encrypted payload from the sandbox. New `crypto` extra (`pip install eupago[crypto]`).
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PII redaction filter (`_logging.py`) — phone, email, NIF.
 - Audit hook (`client.set_audit_hook(...)`).
 - Headless integration test suite (`tests/integration/`) with a Terraform-managed AWS webhook receiver (Lambda + API Gateway + DynamoDB) and a sandbox-backoffice automation helper, so every paid flow is exercised end-to-end without manual clicks.
+- Lifecycle examples covering every payment method (`examples/01`–`12`): MB WAY (payment, auth+capture), Multibanco (reference, get_info), Credit Card (payment, auth+capture, subscription+charge), Apple Pay, Google Pay, Pay By Link, and a standalone Refund flow — each ending with the refund pattern so the full pay → refund cycle is visible end to end.
 
 ### Changed
 - Auth header is now **`Authorization: ApiKey <key>`** (not a header named `ApiKey`). Affects every v1.02 endpoint.

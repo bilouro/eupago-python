@@ -380,9 +380,9 @@ The HMAC key is the channel's "Chave Criptográfica" used as **UTF-8 bytes**.
 |---|---|---|
 | **v0.1.0** | MB WAY + webhooks + core | **Done** |
 | **v0.2.0** | Multibanco | **Done** |
-| v0.3.0 | Credit Card (Done) + Apple/Google Pay | In progress |
-| v0.4.0 | Direct Debit + Refunds (OAuth) | — |
-| v0.5.0 | Payshop, Cofidis, Floa, PIX, PayByLink, Pagaqui | — |
+| **v0.3.0** | Credit Card + Apple/Google Pay | **Done** |
+| **v0.4.0** | Refunds (OAuth) + Pay By Link | **Done** (refund live-verification pending OAuth creds from eupago support) |
+| v0.5.0 | Direct Debit, Payshop, Cofidis, Floa, PIX, Pagaqui, Paysafecard | — |
 | v0.6.0 | Webhook docs/recipes only — `parse_webhook` stays the public API; **no framework adapters** (keeps the SDK framework-agnostic, like Stripe/Mollie) | — |
 | v0.7.0 | CLI tool + dry-run mode | — |
 | v1.0.0 | Stable API, full docs | — |

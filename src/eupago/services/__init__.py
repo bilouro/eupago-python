@@ -3,6 +3,7 @@ from eupago.services.credit_card import CreditCardService
 from eupago.services.google_pay import GooglePayService
 from eupago.services.mbway import MBWayService
 from eupago.services.multibanco import MultibancoService
+from eupago.services.pay_by_link import PayByLinkService
 from eupago.services.refund import RefundService
 
 __all__ = [
@@ -11,5 +12,6 @@ __all__ = [
     "GooglePayService",
     "MBWayService",
     "MultibancoService",
+    "PayByLinkService",
     "RefundService",
 ]

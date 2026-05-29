@@ -32,3 +32,11 @@ captured = client.mbway.capture(
 )
 
 print(f"Captura: {captured.status}")  # PAID
+
+
+# --- Reembolso ---
+#
+# refund = client.refunds.refund(
+#     transaction_id=captured.transaction_id,
+#     value=Decimal("120.00"),
+# )

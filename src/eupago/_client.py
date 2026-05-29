@@ -15,6 +15,7 @@ from eupago.services.credit_card import CreditCardService
 from eupago.services.google_pay import GooglePayService
 from eupago.services.mbway import MBWayService
 from eupago.services.multibanco import MultibancoService
+from eupago.services.pay_by_link import PayByLinkService
 from eupago.services.refund import RefundService
 from eupago.webhooks import Webhooks
 
@@ -74,6 +75,10 @@ class EupagoClient:
     @property
     def google_pay(self) -> GooglePayService:
         return self._get_service("google_pay", GooglePayService)  # type: ignore[no-any-return]
+
+    @property
+    def pay_by_link(self) -> PayByLinkService:
+        return self._get_service("pay_by_link", PayByLinkService)  # type: ignore[no-any-return]
 
     @property
     def refunds(self) -> RefundService:
