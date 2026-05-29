@@ -60,7 +60,7 @@ def client() -> Any:
 
     # Function-scoped because the async transport binds to the test's event loop;
     # sharing across tests trips RuntimeError on teardown in py3.14.
-    return EupagoClient(api_key=_API_KEY or "", sandbox=True)
+    return EupagoClient(api_key=_API_KEY or "", sandbox=True, webhook_secret=_SECRET)
 
 
 @pytest.fixture(scope="module")
@@ -90,8 +90,6 @@ def _new_order_id(prefix: str) -> str:
 
 @pytest.mark.integration
 def test_multibanco_paid_flow(client: Any, backoffice: BackofficeSession, table: Any) -> None:
-    from eupago.webhooks import parse_webhook
-
     order_id = _new_order_id("ITEST-MB")
     ref = client.multibanco.create_reference(order_id=order_id, amount=Decimal("1.23"))
     assert ref.reference is not None
@@ -99,9 +97,7 @@ def test_multibanco_paid_flow(client: Any, backoffice: BackofficeSession, table:
     backoffice.mark_paid_by_identifier(order_id)
 
     item = _wait_for_webhook(table, order_id)
-    event = parse_webhook(
-        body=item["raw_body"], headers=json.loads(item["headers"]), webhook_secret=_SECRET
-    )
+    event = client.webhooks.parse(body=item["raw_body"], headers=json.loads(item["headers"]))
     assert event.reference == ref.reference
     assert event.order_id == order_id
     assert event.status == PaymentStatus.PAID
@@ -118,17 +114,13 @@ def test_multibanco_paid_flow(client: Any, backoffice: BackofficeSession, table:
 async def test_multibanco_async_paid_flow(
     client: Any, backoffice: BackofficeSession, table: Any
 ) -> None:
-    from eupago.webhooks import parse_webhook
-
     order_id = _new_order_id("ITEST-MBA")
     ref = await client.multibanco.create_reference_async(order_id=order_id, amount=Decimal("2.34"))
 
     backoffice.mark_paid_by_identifier(order_id)
 
     item = _wait_for_webhook(table, order_id)
-    event = parse_webhook(
-        body=item["raw_body"], headers=json.loads(item["headers"]), webhook_secret=_SECRET
-    )
+    event = client.webhooks.parse(body=item["raw_body"], headers=json.loads(item["headers"]))
     assert event.reference == ref.reference
     assert event.status == PaymentStatus.PAID
 
@@ -138,8 +130,6 @@ async def test_multibanco_async_paid_flow(
 
 @pytest.mark.integration
 def test_mbway_paid_flow(client: Any, backoffice: BackofficeSession, table: Any) -> None:
-    from eupago.webhooks import parse_webhook
-
     order_id = _new_order_id("ITEST-MW")
     result = client.mbway.create_payment(
         order_id=order_id, amount=Decimal("3.45"), phone_number="912345678"
@@ -149,9 +139,7 @@ def test_mbway_paid_flow(client: Any, backoffice: BackofficeSession, table: Any)
     backoffice.mark_paid_by_identifier(order_id)
 
     item = _wait_for_webhook(table, order_id)
-    event = parse_webhook(
-        body=item["raw_body"], headers=json.loads(item["headers"]), webhook_secret=_SECRET
-    )
+    event = client.webhooks.parse(body=item["raw_body"], headers=json.loads(item["headers"]))
     assert event.order_id == order_id
     assert event.status == PaymentStatus.PAID
     assert event.method == "mbway"
@@ -162,8 +150,6 @@ def test_mbway_paid_flow(client: Any, backoffice: BackofficeSession, table: Any)
 async def test_mbway_async_paid_flow(
     client: Any, backoffice: BackofficeSession, table: Any
 ) -> None:
-    from eupago.webhooks import parse_webhook
-
     order_id = _new_order_id("ITEST-MWA")
     await client.mbway.create_payment_async(
         order_id=order_id, amount=Decimal("4.56"), phone_number="912345678"
@@ -172,9 +158,7 @@ async def test_mbway_async_paid_flow(
     backoffice.mark_paid_by_identifier(order_id)
 
     item = _wait_for_webhook(table, order_id)
-    event = parse_webhook(
-        body=item["raw_body"], headers=json.loads(item["headers"]), webhook_secret=_SECRET
-    )
+    event = client.webhooks.parse(body=item["raw_body"], headers=json.loads(item["headers"]))
     assert event.order_id == order_id
     assert event.status == PaymentStatus.PAID
     assert event.method == "mbway"

@@ -38,4 +38,41 @@ def parse_webhook(
     return parse_v2(data)
 
 
-__all__ = ["parse_webhook", "verify_signature"]
+class Webhooks:
+    """Namespace bound to an ``EupagoClient`` that carries the channel's
+    ``webhook_secret`` so callers don't pass it on every call.
+
+    The same instance handles both **cleartext** and **encrypted** webhooks —
+    encryption is auto-detected from the payload (the ``X-Initialization-Vector``
+    header + the ``{"data": "..."}`` body shape). The caller does **not** need
+    to declare which mode the channel is configured in.
+
+    Usage::
+
+        client = EupagoClient(api_key="…", webhook_secret="…")
+        event = client.webhooks.parse(body=request_body, headers=request_headers)
+
+    Pass ``webhook_secret`` to ``.parse(...)`` to override the client default
+    (e.g. when handling webhooks from multiple channels with different secrets).
+    """
+
+    def __init__(self, webhook_secret: str | None = None) -> None:
+        self._webhook_secret = webhook_secret
+
+    def parse(
+        self,
+        *,
+        body: Union[bytes, str] | None = None,
+        query_params: dict[str, str] | None = None,
+        headers: dict[str, str] | None = None,
+        webhook_secret: str | None = None,
+    ) -> WebhookEvent:
+        return parse_webhook(
+            body=body,
+            query_params=query_params,
+            headers=headers,
+            webhook_secret=webhook_secret if webhook_secret is not None else self._webhook_secret,
+        )
+
+
+__all__ = ["Webhooks", "parse_webhook", "verify_signature"]
