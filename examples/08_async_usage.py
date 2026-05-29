@@ -14,12 +14,11 @@ from eupago import EupagoClient
 async def main() -> None:
     # Context manager fecha conexões automaticamente
     async with EupagoClient(api_key="xxxx-xxxx-xxxx-xxxx-xxxx", sandbox=True) as client:
-
         # MB WAY async
         mbway = await client.mbway.create_payment_async(
             order_id="ASYNC-001",
             amount=Decimal("25.00"),
-            phone_number="351#912345678",
+            phone_number="912345678",
         )
         print(f"MB WAY: {mbway.transaction_id}")
 
@@ -35,7 +34,7 @@ async def main() -> None:
             client.mbway.create_payment_async(
                 order_id="PARALLEL-001",
                 amount=Decimal("10.00"),
-                phone_number="351#912345678",
+                phone_number="912345678",
             ),
             client.multibanco.create_reference_async(
                 order_id="PARALLEL-002",

@@ -321,7 +321,7 @@ if existing:
 result = client.mbway.create_payment(
     order_id="ORD-001",
     amount=Decimal("49.90"),
-    phone_number="351#912345678",
+    phone_number="912345678",
 )
 ```
 
@@ -369,7 +369,7 @@ try:
     result = client.mbway.create_payment(
         order_id="ORD-001",
         amount=Decimal("49.90"),
-        phone_number="351#912345678",
+        phone_number="912345678",
     )
 except ValidationError as e:
     # Invalid parameters — fix in your code

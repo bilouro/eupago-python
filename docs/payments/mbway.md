@@ -63,7 +63,7 @@ from eupago import EupagoClient
 client = EupagoClient(api_key="your-api-key")
 
 response = client.mbway.create_payment(
-    phone_number="351#912345678",
+    phone_number="912345678",
     amount=Decimal("25.00"),
     currency="EUR",
     order_id="order-1001",
@@ -84,7 +84,7 @@ client = EupagoClient(api_key="your-api-key")
 
 # Step 1: Authorize
 auth = client.mbway.authorize(
-    phone_number="351#912345678",
+    phone_number="912345678",
     amount=Decimal("150.00"),
     currency="EUR",
     order_id="order-2002",
@@ -109,7 +109,7 @@ print(capture.status)  # "captured"
 
 | Parameter      | Type      | Required | Description                                                        |
 |----------------|-----------|----------|--------------------------------------------------------------------|
-| `phone_number` | `str`     | Yes      | Customer phone in `"351#9XXXXXXXX"` format (country code + number) |
+| `phone_number` | `str`     | Yes      | Customer phone in `"9XXXXXXXX"` (9 digits, PT MB WAY format) format (country code + number) |
 | `amount`       | `Decimal` | Yes      | Amount to charge (max 99,999 EUR)                                  |
 | `currency`     | `str`     | No       | ISO 4217 currency code. Default: `"EUR"`                           |
 | `order_id`     | `str`     | No       | Your internal order identifier                                     |
@@ -119,7 +119,7 @@ print(capture.status)  # "captured"
 
 | Parameter      | Type      | Required | Description                                                        |
 |----------------|-----------|----------|--------------------------------------------------------------------|
-| `phone_number` | `str`     | Yes      | Customer phone in `"351#9XXXXXXXX"` format (country code + number) |
+| `phone_number` | `str`     | Yes      | Customer phone in `"9XXXXXXXX"` (9 digits, PT MB WAY format) format (country code + number) |
 | `amount`       | `Decimal` | Yes      | Amount to authorize (max 99,999 EUR)                               |
 | `currency`     | `str`     | No       | ISO 4217 currency code. Default: `"EUR"`                           |
 | `order_id`     | `str`     | No       | Your internal order identifier                                     |
@@ -156,7 +156,7 @@ async def main():
     client = AsyncEupagoClient(api_key="your-api-key")
 
     response = await client.mbway.create_payment(
-        phone_number="351#912345678",
+        phone_number="912345678",
         amount=Decimal("25.00"),
         order_id="order-1001",
         callback_url="https://example.com/callback",
@@ -168,7 +168,7 @@ asyncio.run(main())
 
 ## Notes
 
-- The phone number **must** follow the format `"351#9XXXXXXXX"` -- the country code, a `#` separator, and the 9-digit phone number.
+- The phone number **must** follow the format `"9XXXXXXXX"` (9 digits, PT MB WAY format) -- the country code, a `#` separator, and the 9-digit phone number.
 - The customer has **5 minutes** to approve or reject the payment on the MB WAY app. If no action is taken, the transaction expires automatically.
 - MB WAY is only available for Portuguese phone numbers (country code `351`).
 - The maximum transaction amount is **99,999 EUR**.

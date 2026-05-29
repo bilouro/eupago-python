@@ -6,7 +6,7 @@ MB WAY e um metodo de pagamento movel amplamente utilizado em Portugal. O client
 
 - **Montante maximo:** 99.999 EUR
 - **Tempo de aprovacao:** 5 minutos
-- **Formato do telemovel:** `"351#912345678"` (indicativo do pais + numero)
+- **Formato do telemovel:** `"912345678"` (indicativo do pais + numero)
 
 ## Diagrama de fluxo
 
@@ -48,7 +48,7 @@ client = EupagoClient(
 
 # Criar pagamento MB WAY
 response = client.mbway.create_payment(
-    phone_number="351#912345678",
+    phone_number="912345678",
     amount=Decimal("25.50"),
     transaction_key="order-12345",
     callback_url="https://example.com/callback",
@@ -60,7 +60,7 @@ print(f"Transacao: {response.transaction_id}")
 
 # Autorizar pagamento (pre-autorizacao)
 auth_response = client.mbway.authorize(
-    phone_number="351#912345678",
+    phone_number="912345678",
     amount=Decimal("50.00"),
     transaction_key="order-67890",
 )
@@ -82,7 +82,7 @@ print(f"Captura: {capture_response.status}")
 
 | Parametro         | Tipo      | Obrigatorio | Descricao                                                    |
 | ----------------- | --------- | ----------- | ------------------------------------------------------------ |
-| `phone_number`    | `str`     | Sim         | Numero do telemovel no formato `"351#912345678"`             |
+| `phone_number`    | `str`     | Sim         | Numero do telemovel no formato `"912345678"`             |
 | `amount`          | `Decimal` | Sim         | Montante a cobrar (max: 99.999 EUR)                          |
 | `transaction_key` | `str`     | Sim         | Identificador unico da transacao no sistema do comerciante   |
 | `callback_url`    | `str`     | Nao         | URL para receber notificacoes de estado do pagamento         |
@@ -92,7 +92,7 @@ print(f"Captura: {capture_response.status}")
 
 | Parametro         | Tipo      | Obrigatorio | Descricao                                                    |
 | ----------------- | --------- | ----------- | ------------------------------------------------------------ |
-| `phone_number`    | `str`     | Sim         | Numero do telemovel no formato `"351#912345678"`             |
+| `phone_number`    | `str`     | Sim         | Numero do telemovel no formato `"912345678"`             |
 | `amount`          | `Decimal` | Sim         | Montante a pre-autorizar (max: 99.999 EUR)                   |
 | `transaction_key` | `str`     | Sim         | Identificador unico da transacao no sistema do comerciante   |
 
@@ -140,7 +140,7 @@ async def main():
     )
 
     response = await client.mbway.create_payment(
-        phone_number="351#912345678",
+        phone_number="912345678",
         amount=Decimal("25.50"),
         transaction_key="order-12345",
         callback_url="https://example.com/callback",
@@ -156,7 +156,7 @@ asyncio.run(main())
 
 ## Notas
 
-1. **Formato do numero de telefone:** O numero deve incluir o indicativo do pais separado por `#`. Para Portugal, usar `"351#9XXXXXXXX"`. Outros indicativos sao suportados para clientes MB WAY internacionais.
+1. **Formato do numero de telefone:** O numero deve incluir o indicativo do pais separado por `#`. Para Portugal, usar `"9XXXXXXXX"` (9 digits, PT MB WAY format). Outros indicativos sao suportados para clientes MB WAY internacionais.
 
 2. **Tempo limite de 5 minutos:** O cliente tem exatamente 5 minutos para aprovar o pagamento na aplicacao MB WAY. Apos esse periodo, o pagamento expira automaticamente e o callback recebe o estado de falha.
 

@@ -18,7 +18,7 @@ client = EupagoClient(api_key="xxxx-xxxx-xxxx-xxxx-xxxx", sandbox=True)
 auth = client.mbway.authorize(
     order_id="RESERVA-001",
     amount=Decimal("120.00"),
-    phone_number="351#912345678",
+    phone_number="912345678",
 )
 
 print(f"Autorização: {auth.transaction_id}")

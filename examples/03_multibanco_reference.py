@@ -22,8 +22,8 @@ ref = client.multibanco.create_reference(
     amount=Decimal("149.90"),
 )
 
-print(f"Entidade:   {ref.entity}")      # Ex: "11249"
-print(f"Referência: {ref.reference}")    # Ex: "999888777"
+print(f"Entidade:   {ref.entity}")  # Ex: "11249"
+print(f"Referência: {ref.reference}")  # Ex: "999888777"
 print(f"Montante:   {ref.amount} EUR")
 
 # Mostrar ao cliente:
@@ -39,9 +39,9 @@ print(f"Montante:   {ref.amount} EUR")
 ref_expiry = client.multibanco.create_reference(
     order_id="ORD-2026-003",
     amount=Decimal("75.00"),
-    expires_at=date(2026, 6, 30),        # Expira a 30 de Junho
-    starts_at=date(2026, 5, 27),         # Válida a partir de hoje
-    send_expiry_reminder=True,           # Email de lembrete antes de expirar
+    expires_at=date(2026, 6, 30),  # Expira a 30 de Junho
+    starts_at=date(2026, 5, 27),  # Válida a partir de hoje
+    send_expiry_reminder=True,  # Email de lembrete antes de expirar
     email="cliente@email.com",
 )
 
@@ -49,15 +49,15 @@ ref_expiry = client.multibanco.create_reference(
 ref_dup = client.multibanco.create_reference(
     order_id="DONATIVO-001",
     amount=Decimal("10.00"),
-    allow_duplicate=True,                # Mesmo referência pode ser paga várias vezes
+    allow_duplicate=True,  # Mesmo referência pode ser paga várias vezes
 )
 
 # Referência com range de valores (cliente escolhe quanto pagar)
 ref_range = client.multibanco.create_reference(
     order_id="CARREGAMENTO-001",
-    amount=Decimal("50.00"),             # Valor sugerido
-    min_amount=Decimal("10.00"),         # Mínimo 10 EUR
-    max_amount=Decimal("100.00"),        # Máximo 100 EUR
+    amount=Decimal("50.00"),  # Valor sugerido
+    min_amount=Decimal("10.00"),  # Mínimo 10 EUR
+    max_amount=Decimal("100.00"),  # Máximo 100 EUR
 )
 
 
@@ -68,5 +68,5 @@ info = client.multibanco.get_info(
     entity="11249",
 )
 
-print(f"Estado: {info.status}")          # PENDING ou PAID
+print(f"Estado: {info.status}")  # PENDING ou PAID
 print(f"Pedido: {info.order_id}")

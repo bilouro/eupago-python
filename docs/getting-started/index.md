@@ -33,7 +33,7 @@ from decimal import Decimal
 payment = client.mbway.create_payment(
     order_id="ORD-2026-001",
     amount=Decimal("49.90"),
-    phone_number="351#912345678",
+    phone_number="912345678",
 )
 
 print(payment.transaction_id)  # Transaction ID
@@ -69,7 +69,7 @@ async with EupagoClient(api_key="...", sandbox=True) as client:
     payment = await client.mbway.create_payment_async(
         order_id="ORD-001",
         amount=Decimal("49.90"),
-        phone_number="351#912345678",
+        phone_number="912345678",
     )
 ```
 

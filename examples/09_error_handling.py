@@ -22,7 +22,7 @@ try:
     payment = client.mbway.create_payment(
         order_id="ORD-ERR-001",
         amount=Decimal("49.90"),
-        phone_number="351#912345678",
+        phone_number="912345678",
     )
     print(f"Sucesso: {payment.transaction_id}")
 
