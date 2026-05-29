@@ -214,7 +214,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 This is a community SDK. If you're integrating it into a production system and
 want **prioritised features, custom payment methods, audit support, or hands-on
-help with eupago's quirks**, you can reach me at **bilouro@bilouro.com** —
+help with eupago's quirks**, you can reach me at **consulting@bilouro.com** —
 happy to help on a paid consulting basis.
 
 For general questions, file an issue.

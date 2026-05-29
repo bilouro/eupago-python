@@ -3,7 +3,7 @@
 ## Reporting a Vulnerability
 
 If you discover a security vulnerability in this SDK, please report it privately
-via email to **breathpilatestudio@gmail.com**.
+via email to **cve@bilouro.com**.
 
 Do **not** open a public GitHub issue for security vulnerabilities.
 
