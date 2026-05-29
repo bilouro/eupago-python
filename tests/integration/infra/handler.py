@@ -42,7 +42,9 @@ def handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     try:
         data = json.loads(body)
         if isinstance(data, dict):
-            tx = data.get("transactions", data)
+            # eupago v2.0 wraps fields in "transaction" (singular); keep
+            # "transactions" as a fallback in case the format changes.
+            tx = data.get("transaction") or data.get("transactions") or data
             order_id = tx.get("identifier")
             reference = str(tx["reference"]) if tx.get("reference") is not None else None
             status = tx.get("status")
