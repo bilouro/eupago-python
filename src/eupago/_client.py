@@ -10,6 +10,7 @@ from eupago._config import (
     SANDBOX_BASE_URL,
 )
 from eupago._http import AuditHook, HttpTransport
+from eupago.services.credit_card import CreditCardService
 from eupago.services.mbway import MBWayService
 from eupago.services.multibanco import MultibancoService
 from eupago.webhooks import Webhooks
@@ -58,6 +59,10 @@ class EupagoClient:
     @property
     def multibanco(self) -> MultibancoService:
         return self._get_service("multibanco", MultibancoService)  # type: ignore[no-any-return]
+
+    @property
+    def credit_card(self) -> CreditCardService:
+        return self._get_service("credit_card", CreditCardService)  # type: ignore[no-any-return]
 
     @property
     def webhooks(self) -> Webhooks:
