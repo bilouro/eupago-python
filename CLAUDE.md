@@ -362,7 +362,7 @@ Add the import.
 | v0.3.0 | Credit Card + Apple/Google Pay | — |
 | v0.4.0 | Direct Debit + Refunds (OAuth) | — |
 | v0.5.0 | Payshop, Cofidis, Floa, PIX, PayByLink, Pagaqui | — |
-| v0.6.0 | Webhook adapters (Flask, Django, FastAPI) | — |
+| v0.6.0 | Webhook docs/recipes only — `parse_webhook` stays the public API; **no framework adapters** (keeps the SDK framework-agnostic, like Stripe/Mollie) | — |
 | v0.7.0 | CLI tool + dry-run mode | — |
 | v1.0.0 | Stable API, full docs | — |
 
