@@ -1,8 +1,24 @@
 {
   "estado": 0,
-  "entidade": 11249,
-  "referencia": 999888777,
-  "valor": 49.90,
-  "id": "ORD-001",
-  "data_pagamento": "2026-05-27 10:30:00"
+  "entidade": "12345",
+  "referencia": "999888777",
+  "identificador": "ORD-001",
+  "estado_referencia": "paga",
+  "data_criacao": "2026-05-26",
+  "hora_criacao": "14:00:00",
+  "pagamentos": [
+    {
+      "trid": 78901,
+      "estado": "paga",
+      "valor": "49.90000",
+      "comissao": "0.68000",
+      "arquivada": false,
+      "data_pagamento": "2026-05-27",
+      "hora_pagamento": "10:30:00",
+      "local_pagamento": null,
+      "data_previsao_transferencia": "2026-05-30"
+    }
+  ],
+  "sucesso": true,
+  "resposta": "OK"
 }

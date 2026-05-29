@@ -105,18 +105,24 @@ def _parse_info_response(data: dict[str, Any]) -> PaymentResult:
 
     entity = data.get("entidade")
     reference = data.get("referencia")
-    amount_raw = data.get("valor")
-    amount = Decimal(str(amount_raw)) if amount_raw is not None else None
 
-    paid_at = data.get("data_pagamento")
-    status = PaymentStatus.PAID if paid_at else PaymentStatus.PENDING
+    # When paid, eupago returns estado_referencia="paga" and a "pagamentos" array
+    # with the payment details (amount/trid live there, not at the top level).
+    payments = data.get("pagamentos") or []
+    paid = next((p for p in payments if str(p.get("estado", "")).lower() == "paga"), None)
+    is_paid = str(data.get("estado_referencia", "")).lower() == "paga" or paid is not None
+
+    amount_raw = paid.get("valor") if paid else data.get("valor")
+    amount = Decimal(str(amount_raw)) if amount_raw is not None else None
+    transaction_id = str(paid["trid"]) if paid and paid.get("trid") is not None else None
 
     return PaymentResult(
-        order_id=data.get("id"),
+        order_id=data.get("identificador") or data.get("id"),
         amount=amount,
+        transaction_id=transaction_id,
         entity=str(entity) if entity is not None else None,
         reference=str(reference) if reference is not None else None,
-        status=status,
+        status=PaymentStatus.PAID if is_paid else PaymentStatus.PENDING,
         method="multibanco",
         raw_response=data,
     )
