@@ -1,0 +1,14 @@
+# Terraform state contains account IDs, ARNs and resource details — never commit.
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+crash.log
+
+# Local build artifact (zipped Lambda)
+.build/
+*.zip
+
+# Local variable overrides (may contain account-specific values)
+*.tfvars
+*.auto.tfvars
