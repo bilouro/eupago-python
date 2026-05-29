@@ -1,6 +1,6 @@
 output "webhook_url" {
   description = "Configure this URL in the eupago sandbox channel (Webhooks 2.0)."
-  value       = "${aws_apigatewayv2_stage.default.invoke_url}/webhook"
+  value       = "${trimsuffix(aws_apigatewayv2_stage.default.invoke_url, "/")}/webhook"
 }
 
 output "table_name" {
