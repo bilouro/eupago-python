@@ -26,6 +26,7 @@ dependencies = [
 [project.optional-dependencies]
 crypto = ["cryptography>=42.0"]
 integration = ["boto3>=1.34"]
+e2e = ["playwright>=1.40"]
 django = ["django>=4.0"]
 fastapi = ["fastapi>=0.100"]
 flask = ["flask>=2.0"]

@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **MB WAY**: `create_payment`, `authorize`, `capture` (sync + async). Live-verified against the eupago sandbox.
 - **Multibanco**: `create_reference`, `get_info` (sync + async). Live-verified, including the paid `info` response.
-- **Credit Card**: `create_payment`, `authorize`, `capture`, `create_subscription`, `charge_subscription` (sync + async). `create` live-verified against the sandbox; full 3D-Secure paid flow uses the official test card (`4018810000150015`, OTP `0101`) and is documented but not yet driven by an automated test (Playwright is the next step).
+- **Credit Card**: `create_payment`, `authorize`, `capture`, `create_subscription`, `charge_subscription` (sync + async). Full 3D-Secure flow is end-to-end validated by a Playwright integration test using the official sandbox test card (`4018810000150015`, OTP `0101`) — Playwright drives the Shift4 form and the Credorax ACS challenge, and the test asserts the `Paid` webhook lands in the test receiver.
+- **Refunds**: `client.refunds.refund` (sync + async). OAuth-authenticated against `/api/management/v1.02/refund/{trid}`; live verification requires `client_id` / `client_secret` on the channel and a paid transaction to refund.
+- New `e2e` optional extra (`pip install eupago[e2e]`) — Playwright dep for the headless 3DS test.
 - **`EupagoClient(webhook_secret=...)`** and a **`client.webhooks.parse(body, headers)`** namespace (Stripe-style configuration on the client; the module-level `parse_webhook` stays as the escape hatch).
 - **Encrypted webhook support** (AES-256-CBC) — auto-detected from `X-Initialization-Vector` and the `{"data": "..."}` body shape, validated end-to-end against a real encrypted payload from the sandbox. New `crypto` extra (`pip install eupago[crypto]`).
 - `currency` parameter on MB WAY create/authorize (defaults to `EUR`).
