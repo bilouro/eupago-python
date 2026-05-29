@@ -74,12 +74,33 @@ def table() -> Any:
     return boto3.resource("dynamodb").Table(_TABLE)
 
 
-def _wait_for_webhook(table: Any, order_id: str, timeout: int = 60) -> dict[str, Any]:
+def _wait_for_webhook(client: Any, table: Any, order_id: str, timeout: int = 60) -> dict[str, Any]:
+    """Find the captured webhook for ``order_id``.
+
+    Fast path: the cleartext Lambda keys items by the eupago ``identifier`` so
+    a direct GetItem hits. Encrypted webhooks land as ``raw-<uuid>`` (the Lambda
+    can't read the identifier from ciphertext), so we fall back to scanning
+    recent items and matching via decrypt+parse.
+    """
     deadline = time.time() + timeout
+    floor = int(time.time()) - 90  # only look at recently captured items
     while time.time() < deadline:
         item = table.get_item(Key={"order_id": order_id}).get("Item")
         if item:
             return item  # type: ignore[no-any-return]
+        for it in table.scan()["Items"]:
+            if int(it.get("received_at", 0)) < floor:
+                continue
+            if not str(it.get("order_id", "")).startswith("raw-"):
+                continue
+            try:
+                event = client.webhooks.parse(
+                    body=it["raw_body"], headers=json.loads(it["headers"])
+                )
+            except Exception:  # noqa: S112 - bad signature/decrypt on unrelated items is expected
+                continue
+            if event.order_id == order_id:
+                return it  # type: ignore[no-any-return]
         time.sleep(3)
     pytest.fail(f"no webhook captured for {order_id} within {timeout}s")
 
@@ -96,7 +117,7 @@ def test_multibanco_paid_flow(client: Any, backoffice: BackofficeSession, table:
 
     backoffice.mark_paid_by_identifier(order_id)
 
-    item = _wait_for_webhook(table, order_id)
+    item = _wait_for_webhook(client, table, order_id)
     event = client.webhooks.parse(body=item["raw_body"], headers=json.loads(item["headers"]))
     assert event.reference == ref.reference
     assert event.order_id == order_id
@@ -119,7 +140,7 @@ async def test_multibanco_async_paid_flow(
 
     backoffice.mark_paid_by_identifier(order_id)
 
-    item = _wait_for_webhook(table, order_id)
+    item = _wait_for_webhook(client, table, order_id)
     event = client.webhooks.parse(body=item["raw_body"], headers=json.loads(item["headers"]))
     assert event.reference == ref.reference
     assert event.status == PaymentStatus.PAID
@@ -138,7 +159,7 @@ def test_mbway_paid_flow(client: Any, backoffice: BackofficeSession, table: Any)
 
     backoffice.mark_paid_by_identifier(order_id)
 
-    item = _wait_for_webhook(table, order_id)
+    item = _wait_for_webhook(client, table, order_id)
     event = client.webhooks.parse(body=item["raw_body"], headers=json.loads(item["headers"]))
     assert event.order_id == order_id
     assert event.status == PaymentStatus.PAID
@@ -157,7 +178,7 @@ async def test_mbway_async_paid_flow(
 
     backoffice.mark_paid_by_identifier(order_id)
 
-    item = _wait_for_webhook(table, order_id)
+    item = _wait_for_webhook(client, table, order_id)
     event = client.webhooks.parse(body=item["raw_body"], headers=json.loads(item["headers"]))
     assert event.order_id == order_id
     assert event.status == PaymentStatus.PAID

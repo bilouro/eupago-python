@@ -30,7 +30,15 @@ def decrypt_payload(encrypted_data: str, secret: str, iv_b64: str) -> bytes:
     try:
         iv = base64.b64decode(iv_b64)
         data = base64.b64decode(encrypted_data)
-        key = hashlib.sha256(secret.encode()).digest()
+        # The channel's "Chave Criptográfica" is the 32-byte AES-256 key directly
+        # (eupago generates it with the exact size). It is NOT a passphrase to
+        # derive a key from.
+        key = secret.encode()
+        if len(key) != 32:
+            raise DecryptionError(
+                f"webhook_secret must be 32 bytes (the channel's Chave "
+                f"Criptográfica); got {len(key)} bytes"
+            )
 
         cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
         decryptor = cipher.decryptor()

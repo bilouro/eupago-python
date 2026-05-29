@@ -25,12 +25,18 @@ def parse_webhook(
 
     raw_body = body.encode() if isinstance(body, str) else body
 
-    if webhook_secret and "x-signature" in headers:
-        verify_signature(raw_body, headers["x-signature"], webhook_secret)
-
     data = parse_body(raw_body)
+    encrypted = "data" in data and "x-initialization-vector" in headers
 
-    if "data" in data and webhook_secret and "x-initialization-vector" in headers:
+    # eupago signs DIFFERENT bytes depending on the channel mode:
+    #   cleartext: HMAC over the raw body
+    #   encrypted: HMAC over the base64 ciphertext string (the value of "data")
+    # Both confirmed against real sandbox webhooks.
+    if webhook_secret and "x-signature" in headers:
+        sig_payload = data["data"].encode() if encrypted else raw_body
+        verify_signature(sig_payload, headers["x-signature"], webhook_secret)
+
+    if encrypted and webhook_secret:
         iv = headers["x-initialization-vector"]
         decrypted = decrypt_payload(data["data"], webhook_secret, iv)
         data = parse_body(decrypted)
