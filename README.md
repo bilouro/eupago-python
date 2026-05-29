@@ -28,13 +28,14 @@ as Paid in the sandbox backoffice and validates the captured webhook):
 | **Credit Card** — `create_payment`, `authorize`, `capture`, `create_subscription`, `charge_subscription` (sync + async) | ✅ Full 3DS + paid-webhook flow live-validated via Playwright (test card `4018810000150015`, OTP `0101`) |
 | **Apple Pay** — `client.apple_pay.create_payment` (sync + async) | ✅ Implemented + unit-tested (live verification needs a real Apple Wallet token) |
 | **Google Pay** — `client.google_pay.create_payment` (sync + async) | ✅ Implemented + unit-tested (live verification needs a real Google Pay token) |
+| **Pay By Link** — `client.pay_by_link.create_payment` (sync + async) | ✅ Live-validated against the sandbox (creates real `paybylink/form/...` URLs) |
 | **Refunds** — `client.refunds.refund` (sync + async, OAuth) | ✅ Implemented + unit-tested. Live verification needs `client_id`/`client_secret` (issued by eupago support, **not** self-service in the backoffice) and a paid transaction. Note: eupago doesn't fire a webhook on refunds — verify from the response. |
 | **Webhooks 2.0** — POST, HMAC signature, both cleartext **and** AES-256-CBC encrypted | ✅ Live-validated |
 | **Webhooks 1.0** — legacy GET | ✅ Implemented |
 | Core: typed errors, retries, sync+async, audit hook, PII redaction | ✅ |
 
-Planned (see [roadmap in CLAUDE.md](CLAUDE.md)): Credit Card, Apple/Google Pay,
-Direct Debit, Refunds, Payshop, Cofidis, Floa, PIX, Pay By Link.
+Planned (see [roadmap in CLAUDE.md](CLAUDE.md)): Direct Debit, Payshop, Cofidis,
+Floa, PIX, Pagaqui, Paysafecard.
 
 ## Installation
 

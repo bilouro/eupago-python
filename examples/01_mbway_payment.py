@@ -32,5 +32,15 @@ print(f"Transaction ID: {payment.transaction_id}")
 print(f"Status:         {payment.status}")  # PaymentStatus.PENDING
 print(f"Montante:       {payment.amount} {payment.currency}")
 
-# 3. Aguardar webhook da eupago (ver exemplo 06_webhook_fastapi.py)
+# 3. Aguardar webhook da eupago (ver exemplo 04_webhook_fastapi.py)
 #    Quando o cliente aprovar, recebes status=PAID no webhook.
+
+
+# --- Reembolso ---
+#
+# Após pago, pode-se reembolsar total ou parcialmente (ver examples/12_refund.py).
+#
+# refund = client.refunds.refund(
+#     transaction_id=payment.transaction_id,
+#     value=Decimal("49.90"),
+# )

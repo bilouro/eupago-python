@@ -65,6 +65,10 @@ plugins:
             Payments: Pagamentos
             Which method to choose?: Qual método escolher?
             Credit Card: Cartão de Crédito
+            Apple Pay: Apple Pay
+            Google Pay: Google Pay
+            Pay By Link: Pay By Link
+            Refunds: Reembolsos
             Signature Verification: Verificação de assinatura
             Recipes: Receitas
             Errors & Troubleshooting: Erros e Troubleshooting
@@ -90,6 +94,11 @@ nav:
     - Which method to choose?: payments/index.md
     - MB WAY: payments/mbway.md
     - Multibanco: payments/multibanco.md
+    - Credit Card: payments/credit-card.md
+    - Apple Pay: payments/apple-pay.md
+    - Google Pay: payments/google-pay.md
+    - Pay By Link: payments/pay-by-link.md
+    - Refunds: payments/refund.md
   - Webhooks:
     - Webhooks: webhooks/index.md
     - Signature Verification: webhooks/signature.md

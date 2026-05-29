@@ -70,3 +70,14 @@ info = client.multibanco.get_info(
 
 print(f"Estado: {info.status}")  # PENDING ou PAID
 print(f"Pedido: {info.order_id}")
+
+
+# --- Reembolso (após pago) ---
+#
+# Quando a referência já foi paga, podes reembolsar via OAuth — ver
+# examples/12_refund.py para a configuração completa.
+#
+# refund = client.refunds.refund(
+#     transaction_id=info.transaction_id,
+#     value=Decimal("149.90"),
+# )
