@@ -8,7 +8,8 @@ from eupago.exceptions import DecryptionError, SignatureError
 
 
 def verify_signature(payload: bytes, signature: str, secret: str) -> None:
-    expected = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
+    digest = hmac.new(secret.encode(), payload, hashlib.sha256).digest()
+    expected = base64.b64encode(digest).decode()
     if not hmac.compare_digest(expected, signature):
         raise SignatureError("Webhook signature verification failed")
 

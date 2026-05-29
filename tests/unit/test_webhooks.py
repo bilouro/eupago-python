@@ -16,7 +16,8 @@ from eupago.webhooks import parse_webhook
 
 
 def _sign(body: bytes, secret: str) -> str:
-    return hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    """eupago signs with base64(HMAC-SHA256(raw_body, secret))."""
+    return base64.b64encode(hmac.new(secret.encode(), body, hashlib.sha256).digest()).decode()
 
 
 def _encrypt(plaintext: bytes, secret: str) -> tuple[str, str]:
@@ -57,7 +58,7 @@ def test_parse_v1_webhook() -> None:
 
 def test_parse_v2_webhook() -> None:
     body = {
-        "transactions": {
+        "transaction": {
             "entity": 12345,
             "reference": 999888777,
             "identifier": "ORD-2026-001",
@@ -84,10 +85,10 @@ def test_parse_v2_webhook() -> None:
 
 
 def test_v2_webhook_signature_verification() -> None:
-    body_dict = {"transactions": {"trid": 1, "status": "Paid", "identifier": "X"}}
+    body_dict = {"transaction": {"trid": 1, "status": "Paid", "identifier": "X"}}
     body_bytes = json.dumps(body_dict).encode()
     secret = "my-webhook-secret"
-    signature = hmac.new(secret.encode(), body_bytes, hashlib.sha256).hexdigest()
+    signature = _sign(body_bytes, secret)
 
     event = parse_webhook(
         body=body_bytes,
@@ -99,7 +100,7 @@ def test_v2_webhook_signature_verification() -> None:
 
 
 def test_v2_webhook_bad_signature_raises() -> None:
-    body_bytes = b'{"transactions": {"trid": 1, "status": "Paid"}}'
+    body_bytes = b'{"transaction": {"trid": 1, "status": "Paid"}}'
     with pytest.raises(SignatureError, match="signature verification failed"):
         parse_webhook(
             body=body_bytes,
@@ -119,7 +120,7 @@ def test_v2_webhook_encrypted_roundtrip() -> None:
     secret = "aes-key-from-backoffice"
     plaintext = json.dumps(
         {
-            "transactions": {
+            "transaction": {
                 "trid": 78901,
                 "identifier": "ORD-ENC-1",
                 "reference": 999888777,
@@ -176,20 +177,20 @@ def test_v2_webhook_invalid_ciphertext_raises() -> None:
     ],
 )
 def test_v2_webhook_status_variants(raw_status: str, expected: PaymentStatus) -> None:
-    body = json.dumps({"transactions": {"trid": 1, "status": raw_status}}).encode()
+    body = json.dumps({"transaction": {"trid": 1, "status": raw_status}}).encode()
     event = parse_webhook(body=body)
     assert event.status == expected
 
 
 def test_v2_webhook_amount_as_scalar() -> None:
-    body = json.dumps({"transactions": {"trid": 1, "status": "Paid", "amount": 12.5}}).encode()
+    body = json.dumps({"transaction": {"trid": 1, "status": "Paid", "amount": 12.5}}).encode()
     event = parse_webhook(body=body)
     assert str(event.amount) == "12.5"
     assert event.currency == "EUR"
 
 
 def test_v2_webhook_minimal_fields() -> None:
-    body = json.dumps({"transactions": {"trid": 1, "status": "Paid"}}).encode()
+    body = json.dumps({"transaction": {"trid": 1, "status": "Paid"}}).encode()
     event = parse_webhook(body=body)
     assert event.transaction_id == "1"
     assert event.reference is None
@@ -205,5 +206,6 @@ def test_parse_webhook_from_fixture(fixture_data) -> None:
     assert event.order_id == "ORD-2026-001"
     assert event.transaction_id == "78901"
     assert event.status == PaymentStatus.PAID
-    assert event.channel == "main-channel"
-    assert str(event.fee) == "0.35"
+    assert event.method == "multibanco"
+    assert event.channel == "demo-channel"
+    assert str(event.fee) == "0.8364"
