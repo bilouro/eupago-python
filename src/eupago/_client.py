@@ -13,6 +13,7 @@ from eupago._http import AuditHook, HttpTransport
 from eupago.services.credit_card import CreditCardService
 from eupago.services.mbway import MBWayService
 from eupago.services.multibanco import MultibancoService
+from eupago.services.refund import RefundService
 from eupago.webhooks import Webhooks
 
 
@@ -63,6 +64,10 @@ class EupagoClient:
     @property
     def credit_card(self) -> CreditCardService:
         return self._get_service("credit_card", CreditCardService)  # type: ignore[no-any-return]
+
+    @property
+    def refunds(self) -> RefundService:
+        return self._get_service("refunds", RefundService)  # type: ignore[no-any-return]
 
     @property
     def webhooks(self) -> Webhooks:

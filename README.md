@@ -25,7 +25,8 @@ as Paid in the sandbox backoffice and validates the captured webhook):
 |---|---|
 | **MB WAY** — `create_payment`, `authorize`, `capture` (sync + async) | ✅ Live-validated |
 | **Multibanco** — `create_reference`, `get_info` (sync + async) | ✅ Live-validated |
-| **Credit Card** — `create_payment`, `authorize`, `capture`, `create_subscription`, `charge_subscription` (sync + async) | ✅ `create` live-validated; the rest mirrors the same v1.02 contract |
+| **Credit Card** — `create_payment`, `authorize`, `capture`, `create_subscription`, `charge_subscription` (sync + async) | ✅ Full 3DS + paid-webhook flow live-validated via Playwright (test card `4018810000150015`, OTP `0101`) |
+| **Refunds** — `client.refunds.refund` (sync + async, OAuth) | ✅ Implemented + unit-tested (live verification needs OAuth credentials + a paid transaction) |
 | **Webhooks 2.0** — POST, HMAC signature, both cleartext **and** AES-256-CBC encrypted | ✅ Live-validated |
 | **Webhooks 1.0** — legacy GET | ✅ Implemented |
 | Core: typed errors, retries, sync+async, audit hook, PII redaction | ✅ |
