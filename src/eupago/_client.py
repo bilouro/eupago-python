@@ -12,6 +12,7 @@ from eupago._config import (
 from eupago._http import AuditHook, HttpTransport
 from eupago.services.mbway import MBWayService
 from eupago.services.multibanco import MultibancoService
+from eupago.webhooks import Webhooks
 
 
 class EupagoClient:
@@ -21,6 +22,7 @@ class EupagoClient:
         *,
         client_id: str | None = None,
         client_secret: str | None = None,
+        webhook_secret: str | None = None,
         sandbox: bool = False,
         timeout: float = DEFAULT_TIMEOUT,
         max_retries: int = DEFAULT_MAX_RETRIES,
@@ -42,6 +44,7 @@ class EupagoClient:
             self._oauth = OAuthAuth(client_id, client_secret, self._transport)
 
         self._services: dict[str, Any] = {}
+        self._webhooks = Webhooks(webhook_secret)
 
     def _get_service(self, name: str, cls: type[Any]) -> Any:
         if name not in self._services:
@@ -55,6 +58,10 @@ class EupagoClient:
     @property
     def multibanco(self) -> MultibancoService:
         return self._get_service("multibanco", MultibancoService)  # type: ignore[no-any-return]
+
+    @property
+    def webhooks(self) -> Webhooks:
+        return self._webhooks
 
     def set_audit_hook(self, hook: AuditHook | None) -> None:
         self._transport.set_audit_hook(hook)
