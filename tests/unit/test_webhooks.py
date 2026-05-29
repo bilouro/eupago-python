@@ -21,8 +21,12 @@ def _sign(body: bytes, secret: str) -> str:
 
 
 def _encrypt(plaintext: bytes, secret: str) -> tuple[str, str]:
-    """Mirror eupago's AES-256-CBC scheme: key = sha256(secret), random IV, PKCS7 pad."""
-    key = hashlib.sha256(secret.encode()).digest()
+    """Mirror eupago's AES-256-CBC scheme: secret IS the 32-byte key (no derivation).
+
+    Confirmed against a real sandbox encrypted webhook.
+    """
+    key = secret.encode()
+    assert len(key) == 32, "test secret must be 32 bytes (matches the Chave Criptográfica)"
     iv = os.urandom(16)
     padder = PKCS7(128).padder()
     padded = padder.update(plaintext) + padder.finalize()
@@ -117,7 +121,8 @@ def test_parse_webhook_requires_body_or_params() -> None:
 
 
 def test_v2_webhook_encrypted_roundtrip() -> None:
-    secret = "aes-key-from-backoffice"
+    # 32-byte secret matching the channel's "Chave Criptográfica" length
+    secret = "0123456789abcdef0123456789abcdef"
     plaintext = json.dumps(
         {
             "transaction": {
@@ -137,7 +142,9 @@ def test_v2_webhook_encrypted_roundtrip() -> None:
     event = parse_webhook(
         body=body,
         headers={
-            "X-Signature": _sign(body, secret),
+            # For encrypted webhooks eupago signs the base64 ciphertext STRING
+            # (the value of "data"), not the full body.
+            "X-Signature": _sign(ciphertext_b64.encode(), secret),
             "X-Initialization-Vector": iv_b64,
         },
         webhook_secret=secret,
@@ -151,7 +158,7 @@ def test_v2_webhook_encrypted_roundtrip() -> None:
 
 
 def test_v2_webhook_invalid_ciphertext_raises() -> None:
-    secret = "aes-key"
+    secret = "0123456789abcdef0123456789abcdef"  # 32 bytes
     iv_b64 = base64.b64encode(os.urandom(16)).decode()
     # 7 bytes is not a multiple of the AES block size -> deterministic decrypt failure
     bad_ciphertext = base64.b64encode(os.urandom(7)).decode()
@@ -162,6 +169,19 @@ def test_v2_webhook_invalid_ciphertext_raises() -> None:
             body=body,
             headers={"X-Initialization-Vector": iv_b64},
             webhook_secret=secret,
+        )
+
+
+def test_v2_webhook_wrong_secret_length_raises() -> None:
+    """The AES key must be exactly 32 bytes — the backoffice always generates that."""
+    body = json.dumps({"data": base64.b64encode(os.urandom(32)).decode()}).encode()
+    iv_b64 = base64.b64encode(os.urandom(16)).decode()
+
+    with pytest.raises(DecryptionError, match="32 bytes"):
+        parse_webhook(
+            body=body,
+            headers={"X-Initialization-Vector": iv_b64},
+            webhook_secret="too-short",
         )
 
 

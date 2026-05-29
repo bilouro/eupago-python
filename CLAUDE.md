@@ -317,8 +317,23 @@ Add the import.
 ### Webhook v2.0 Format
 
 Verified against the real sandbox (note: `transaction` is **singular**; values are
-often strings). Signature header `X-Signature` is **`base64(HMAC-SHA256(raw_body, webhook_secret))`**
-(NOT hex). The HMAC key is the channel's "Chave Criptográfica".
+often strings).
+
+**Signature** (`X-Signature`, base64-encoded HMAC-SHA256) — the bytes signed
+depend on whether the channel encrypts:
+- **cleartext channel:** `base64(HMAC-SHA256(raw_body, secret))`
+- **encrypted channel:** `base64(HMAC-SHA256(ciphertext_b64_string, secret))`
+  where `ciphertext_b64_string` is the value of the `data` field of the body.
+
+The HMAC key is the channel's "Chave Criptográfica" used as **UTF-8 bytes**.
+
+**Encryption** (when enabled): AES-256-CBC with PKCS7 padding.
+- **AES key = the channel's "Chave Criptográfica" as raw bytes (32 bytes).** It is
+  **not** a passphrase — the backoffice generates a key of exactly the right
+  size. Do NOT pass it through `SHA-256` or any KDF.
+- IV: base64 in header `X-Initialization-Vector` (16 bytes after decode).
+- Encrypted body shape: `{"data": "<base64 ciphertext>"}`.
+- After decryption, the plaintext is the same `{"channel": ..., "transaction": ...}` JSON below.
 
 ```json
 {
