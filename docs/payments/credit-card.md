@@ -63,26 +63,56 @@ auth = client.credit_card.authorize(
     success_url="...", error_url="...", back_url="...",
 )
 
-# Later, when the goods ship:
-captured = client.credit_card.capture(transaction_id=auth.transaction_id)
+# Later, when the goods ship — capture requires the amount and the same
+# return URLs (eupago rejects an empty body with AMOUNT_MISSING).
+captured = client.credit_card.capture(
+    transaction_id=auth.transaction_id,
+    amount=Decimal("100.00"),
+    success_url="...", error_url="...", back_url="...",
+)
 ```
+
+!!! warning "Channel capability"
+    `authorize` + `capture` need the eupago channel to have **Credit Card
+    Auth & Capture** provisioned (a separate feature beyond plain Credit
+    Card). On a vanilla demo channel the form posts to the merchant
+    `errorUrl` and capture returns `PAYMENT_NOT_CAPTIVE`. Ask eupago
+    support to enable the feature on your channel.
 
 ## Example — subscription
 
 ```python
 sub = client.credit_card.create_subscription(
     order_id="SUB-2026-001",
-    amount=Decimal("0.00"),  # 0 = card registration only
+    amount=Decimal("19.90"),         # the recurring amount
     success_url="...", error_url="...", back_url="...",
+    # Optional — defaults to monthly billing on day 1 for 1 year:
+    # periodicity="Mensal",
+    # collection_day=1,
+    # auto_process=False,            # True = eupago bills automatically
+    # start_date=date(2026, 6, 1),
+    # limit_date=date(2027, 6, 1),
 )
 
-# Once the webhook delivers a recurrent_id:
+# sub.transaction_id is the subscriptionID (32-char hex) — keep it.
+subscription_id = sub.transaction_id
+
+# Charge it later (server-to-server, no customer interaction):
 client.credit_card.charge_subscription(
-    recurrent_id=12345,
+    recurrent_id=subscription_id,
     order_id="SUB-2026-001-M01",
     amount=Decimal("19.90"),
+    success_url="...", error_url="...", back_url="...",
 )
 ```
+
+!!! warning "Channel capability"
+    Subscription endpoints require the channel to have **Credit Card —
+    Subscription** provisioned by eupago. Without it, the registration
+    form posts to the merchant `errorUrl` and any subsequent
+    `charge_subscription` is refused. The SDK send the correct body
+    (verified against the readme.io spec); enable the feature in the
+    backoffice or via support.
 
 ## Refund
 

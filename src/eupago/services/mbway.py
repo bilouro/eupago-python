@@ -21,6 +21,7 @@ def _build_request_body(
     phone_number: str,
     *,
     currency: str = "EUR",
+    country_code: str = "351",
     customer: Customer | None = None,
     description: str | None = None,
     callback_url: str | None = None,
@@ -35,6 +36,7 @@ def _build_request_body(
         "amount": {"value": float(amount), "currency": currency},
         "identifier": order_id,
         "customerPhone": phone_number,
+        "countryCode": country_code,
         "lang": language,
     }
     if description:
@@ -83,6 +85,7 @@ class MBWayService(BaseService):
         phone_number: str,
         *,
         currency: str = "EUR",
+        country_code: str = "351",
         customer: Customer | None = None,
         description: str | None = None,
         callback_url: str | None = None,
@@ -93,6 +96,7 @@ class MBWayService(BaseService):
             amount,
             phone_number,
             currency=currency,
+            country_code=country_code,
             customer=customer,
             description=description,
             callback_url=callback_url,
@@ -108,6 +112,7 @@ class MBWayService(BaseService):
         phone_number: str,
         *,
         currency: str = "EUR",
+        country_code: str = "351",
         customer: Customer | None = None,
         description: str | None = None,
         callback_url: str | None = None,
@@ -118,6 +123,7 @@ class MBWayService(BaseService):
             amount,
             phone_number,
             currency=currency,
+            country_code=country_code,
             customer=customer,
             description=description,
             callback_url=callback_url,
@@ -133,6 +139,7 @@ class MBWayService(BaseService):
         phone_number: str,
         *,
         currency: str = "EUR",
+        country_code: str = "351",
         customer: Customer | None = None,
         callback_url: str | None = None,
     ) -> PaymentResult:
@@ -141,6 +148,7 @@ class MBWayService(BaseService):
             amount,
             phone_number,
             currency=currency,
+            country_code=country_code,
             customer=customer,
             callback_url=callback_url,
         )
@@ -154,6 +162,7 @@ class MBWayService(BaseService):
         phone_number: str,
         *,
         currency: str = "EUR",
+        country_code: str = "351",
         customer: Customer | None = None,
         callback_url: str | None = None,
     ) -> PaymentResult:
@@ -162,6 +171,7 @@ class MBWayService(BaseService):
             amount,
             phone_number,
             currency=currency,
+            country_code=country_code,
             customer=customer,
             callback_url=callback_url,
         )
@@ -173,7 +183,7 @@ class MBWayService(BaseService):
         transaction_id: str,
         amount: Decimal,
     ) -> PaymentResult:
-        body: dict[str, Any] = {"payment": {"amount": float(amount)}}
+        body: dict[str, Any] = {"payment": {"value": float(amount), "currency": "EUR"}}
         path = f"{_PATH_CAPTURE}/{transaction_id}"
         response = self._request("POST", path, json=body)
         data = response.json()
@@ -190,7 +200,7 @@ class MBWayService(BaseService):
         transaction_id: str,
         amount: Decimal,
     ) -> PaymentResult:
-        body: dict[str, Any] = {"payment": {"amount": float(amount)}}
+        body: dict[str, Any] = {"payment": {"value": float(amount), "currency": "EUR"}}
         path = f"{_PATH_CAPTURE}/{transaction_id}"
         response = await self._request_async("POST", path, json=body)
         data = response.json()
