@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`EupagoClient(management_bearer=...)`** — inject a pre-obtained Bearer for the `/api/management/*` endpoints (refunds, transactions, …). Bypasses the OAuth `client_id`/`client_secret` flow. Useful for tests/scripts where the caller already has a token, e.g. from the eupago backoffice login. Production callers should still prefer OAuth.
+- New live integration test `tests/integration/test_refund_live.py` that pays an MB WAY transaction, captures the webhook, then calls `client.refunds.refund(...)` end-to-end and asserts `REFUNDED` + a real `refundId` in the response. Uses `management_bearer` from the backoffice helper as the temporary auth path until eupago issues OAuth credentials.
+
 ### Fixed
+- **Refund** body shape: was `{value, currency, motivo}`, eupago expects `{amount, reason}` (plus optional `iban`/`bic` for non-MB WAY / non-Card transactions). The old shape returned `AMOUNT_MISSING`. Response parser now reads `refundId` correctly (live-verified: `{"transactionStatus":"Success","refundId":"2788","status":"Reembolsado"}`). Parameter renamed from `value` to `amount` to match the wire field.
 - **MB WAY** request body now includes the required `countryCode` (default `"351"`) and `customerPhone` on every endpoint, not only `create`. Without `countryCode` the `authorize` endpoint returns `CUSTOMERPHONE_MISSING` / `BAD_REQUEST` even though the value was present, because the eupago spec ties the two together.
 - **MB WAY capture** body shape: was `{"payment": {"amount": X}}`, eupago expects `{"payment": {"value": X, "currency": "EUR"}}`. The old body returned `AMOUNT_MISSING`. Fixed and asserted by unit test.
 - **Credit Card capture** now sends the full payment body (amount object + URLs) — the previous empty body returned `AMOUNT_MISSING`. New required parameter `amount`; optional `success_url`/`error_url`/`back_url`/`customer`/`order_id`.

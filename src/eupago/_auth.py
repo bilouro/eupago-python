@@ -18,6 +18,31 @@ class ApiKeyAuth:
         return {**body, "chave": self.api_key}
 
 
+class StaticBearerAuth:
+    """Bearer token supplied directly by the caller (no token fetch).
+
+    Use this when the caller has already obtained a Bearer through some other
+    flow (e.g. the eupago backoffice login). It exposes the same
+    ``apply_header`` / ``apply_header_async`` surface as :class:`OAuthAuth`
+    so the rest of the SDK can treat them interchangeably.
+    """
+
+    def __init__(self, token: str) -> None:
+        self._token = token
+
+    def get_token(self) -> str:
+        return self._token
+
+    async def get_token_async(self) -> str:
+        return self._token
+
+    def apply_header(self, headers: dict[str, str]) -> dict[str, str]:
+        return {**headers, "Authorization": f"Bearer {self._token}"}
+
+    async def apply_header_async(self, headers: dict[str, str]) -> dict[str, str]:
+        return {**headers, "Authorization": f"Bearer {self._token}"}
+
+
 class OAuthAuth:
     _TOKEN_BUFFER_SECONDS = 60
 

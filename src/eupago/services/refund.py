@@ -12,27 +12,36 @@ _PATH_REFUND = f"{MANAGEMENT_PREFIX}/refund"
 
 
 def _build_body(
-    value: Decimal,
+    amount: Decimal,
     *,
-    currency: str = "EUR",
     reason: str | None = None,
+    iban: str | None = None,
+    bic: str | None = None,
 ) -> dict[str, Any]:
-    if value <= 0:
-        raise ValidationError("Refund value must be positive")
-    body: dict[str, Any] = {"value": float(value), "currency": currency}
+    if amount <= 0:
+        raise ValidationError("Refund amount must be positive")
+    body: dict[str, Any] = {"amount": float(amount)}
     if reason:
-        body["motivo"] = reason
+        body["reason"] = reason
+    if iban:
+        body["iban"] = iban
+    if bic:
+        body["bic"] = bic
     return body
 
 
-def _parse_response(data: dict[str, Any], transaction_id: str, value: Decimal) -> PaymentResult:
-    status_raw = data.get("transactionStatus")
-    success = status_raw == "Success" or data.get("estado") == 0
+def _parse_response(data: dict[str, Any], transaction_id: str, amount: Decimal) -> PaymentResult:
+    # Live-verified shape (sandbox, May 2026):
+    #   201 {"transactionStatus": "Success", "refundId": "2788",
+    #        "status": "Reembolsado"}
+    success = data.get("transactionStatus") == "Success" or data.get("estado") == 0
     return PaymentResult(
         transaction_id=transaction_id,
-        amount=value,
+        amount=amount,
         status=PaymentStatus.REFUNDED if success else PaymentStatus.ERROR,
         method="refund",
+        # The eupago refundId lives in raw_response — kept opaque on PaymentResult
+        # because callers usually only need it for reconciliation / audit logs.
         raw_response=data,
     )
 
@@ -64,25 +73,27 @@ class RefundService(BaseService):
     def refund(
         self,
         transaction_id: str,
-        value: Decimal,
+        amount: Decimal,
         *,
-        currency: str = "EUR",
         reason: str | None = None,
+        iban: str | None = None,
+        bic: str | None = None,
     ) -> PaymentResult:
-        body = _build_body(value, currency=currency, reason=reason)
+        body = _build_body(amount, reason=reason, iban=iban, bic=bic)
         path = f"{_PATH_REFUND}/{transaction_id}"
         response = self._request("POST", path, json=body)
-        return _parse_response(response.json(), transaction_id, value)
+        return _parse_response(response.json(), transaction_id, amount)
 
     async def refund_async(
         self,
         transaction_id: str,
-        value: Decimal,
+        amount: Decimal,
         *,
-        currency: str = "EUR",
         reason: str | None = None,
+        iban: str | None = None,
+        bic: str | None = None,
     ) -> PaymentResult:
-        body = _build_body(value, currency=currency, reason=reason)
+        body = _build_body(amount, reason=reason, iban=iban, bic=bic)
         path = f"{_PATH_REFUND}/{transaction_id}"
         response = await self._request_async("POST", path, json=body)
-        return _parse_response(response.json(), transaction_id, value)
+        return _parse_response(response.json(), transaction_id, amount)

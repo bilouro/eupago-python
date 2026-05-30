@@ -38,7 +38,7 @@ needs a feature the demo channel doesn't have provisioned.
 | `apple_pay.create_payment` (sync + async) | ✅ | ❌ Requires a real Apple Wallet token from a device |
 | `google_pay.create_payment` (sync + async) | ✅ | ❌ Requires a real Google Pay token from a device |
 | `pay_by_link.create_payment` (sync + async) | ✅ | ✅ Real `paybylink/form/...` URL generated; full customer-completes flow needs at least one method enabled on the channel |
-| `refunds.refund` (sync + async, OAuth) | ✅ | ❌ Needs `client_id`/`client_secret` (issued by eupago support on request — not self-service); eupago doesn't fire a refund webhook, so verification is via the response |
+| `refunds.refund` (sync + async, OAuth) | ✅ | ✅ Live-validated: paid MB WAY → `client.refunds.refund(...)` returns `REFUNDED` + `refundId`. Uses `management_bearer` (backoffice login token) in the test until eupago issues OAuth `client_id`/`client_secret`. Multibanco refunds also require `iban`/`bic`. No webhook fires on refund — verify via the response. |
 | Webhooks v2.0 (POST + HMAC, cleartext **and** AES-256-CBC encrypted) | ✅ | ✅ |
 | Webhooks v1.0 (legacy GET) | ✅ | — |
 | HTTP transport, retries, audit hook, PII redaction | ✅ | — |
