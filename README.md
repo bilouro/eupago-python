@@ -33,8 +33,9 @@ needs a feature the demo channel doesn't have provisioned.
 | `credit_card.create_payment` (sync + async) | ✅ | ✅ Playwright drives Shift4 form + Credorax ACS challenge (`4018810000150015`, OTP `0101`) → webhook PAID |
 | `credit_card.authorize` (sync + async) | ✅ | ⚠️ Endpoint returns 201 + redirectUrl, but form posts to errorUrl on demo channel (*Auth & Capture* not provisioned); test skips |
 | `credit_card.capture` (sync + async) | ✅ | ⚠️ Returns `PAYMENT_NOT_CAPTIVE` on demo channel; test skips |
-| `credit_card.create_subscription` (sync + async) | ✅ | ⚠️ Endpoint returns 201 + `subscriptionID`, but form posts to errorUrl on demo channel (*Subscription* not provisioned); test skips |
-| `credit_card.charge_subscription` (sync + async) | ✅ | ⚠️ Same channel gap blocks the registration step |
+| `credit_card.create_subscription` (sync + async) | ✅ | ✅ Endpoint returns 201 + `subscriptionID`; the registered sub shows up in `list_subscriptions()`. Full card-registration form drive still blocked by channel `Subscription` feature gap |
+| `credit_card.charge_subscription` (sync + async) | ✅ | ⚠️ Needs a sub past `Pendente` (channel gap above) |
+| `credit_card.list_subscriptions` / `get_subscription` / `edit_subscription` / `revoke_subscription` (sync + async, Management API) | ✅ | ✅ list/get/edit live-validated; revoke validated only on the error path (needs an active sub) |
 | `apple_pay.create_payment` (sync + async) | ✅ | ❌ Requires a real Apple Wallet token from a device |
 | `google_pay.create_payment` (sync + async) | ✅ | ❌ Requires a real Google Pay token from a device |
 | `pay_by_link.create_payment` (sync + async) | ✅ | ✅ Real `paybylink/form/...` URL generated; full customer-completes flow needs at least one method enabled on the channel |

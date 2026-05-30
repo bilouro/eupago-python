@@ -126,10 +126,15 @@ class HttpTransport:
         path: str,
         *,
         json: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         last_exc: Exception | None = None
+        effective_headers = dict(headers or {})
+        # Form-encoded body needs the matching Content-Type (httpx Client default is JSON).
+        if data is not None:
+            effective_headers["Content-Type"] = "application/x-www-form-urlencoded"
 
         for attempt in range(self._max_retries + 1):
             try:
@@ -138,8 +143,9 @@ class HttpTransport:
                     method,
                     path,
                     json=json,
+                    data=data,
                     params=params,
-                    headers=headers or {},
+                    headers=effective_headers,
                 )
                 duration_ms = (time.monotonic() - start) * 1000
                 logger.debug(
@@ -175,11 +181,15 @@ class HttpTransport:
         path: str,
         *,
         json: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         client = self._get_async_client()
         last_exc: Exception | None = None
+        effective_headers = dict(headers or {})
+        if data is not None:
+            effective_headers["Content-Type"] = "application/x-www-form-urlencoded"
 
         for attempt in range(self._max_retries + 1):
             try:
@@ -188,8 +198,9 @@ class HttpTransport:
                     method,
                     path,
                     json=json,
+                    data=data,
                     params=params,
-                    headers=headers or {},
+                    headers=effective_headers,
                 )
                 duration_ms = (time.monotonic() - start) * 1000
                 logger.debug(

@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Subscription management** on `client.credit_card` — four new methods covering the full `/api/management/v1.02/subscriptions` + `/creditcard/edit` surface that the eupago backoffice uses (sync + async):
+  - `list_subscriptions()` — returns every subscription on the channel.
+  - `get_subscription(subscription_id)` — full detail incl. `nextCollectionDate` and current `autoProcess` / `collectionDay`.
+  - `edit_subscription(subscription_id, collection_day=..., auto_process=...)` — changes the billing schedule. With `auto_process=True` eupago bills the registered card itself on every `collection_day` of the period — no need to call `charge_subscription`. Sends as `application/x-www-form-urlencoded`, which the SDK transport now supports.
+  - `revoke_subscription(subscription_id)` — cancels an active subscription (raises `SUBSCRIPTION_NOT_FOUND` on `Pendente`).
+  - All four take the **integer** `subscriptionId` from the backoffice URL — not the hex `eupagoToken` (`charge_subscription` still takes the hex). The list response does not include the integer ID today; this is documented as a known eupago UX gap.
+- **HTTP transport** now accepts a `data=` parameter for `application/x-www-form-urlencoded` bodies (with the Content-Type override). Used by `edit_subscription`.
 - **`EupagoClient(management_bearer=...)`** — inject a pre-obtained Bearer for the `/api/management/*` endpoints (refunds, transactions, …). Bypasses the OAuth `client_id`/`client_secret` flow. Useful for tests/scripts where the caller already has a token, e.g. from the eupago backoffice login. Production callers should still prefer OAuth.
 - New live integration test `tests/integration/test_refund_live.py` that pays an MB WAY transaction, captures the webhook, then calls `client.refunds.refund(...)` end-to-end and asserts `REFUNDED` + a real `refundId` in the response. Uses `management_bearer` from the backoffice helper as the temporary auth path until eupago issues OAuth credentials.
 

@@ -4,7 +4,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 
-from eupago._config import API_PREFIX
+from eupago._config import API_PREFIX, MANAGEMENT_PREFIX
 from eupago.exceptions import ValidationError
 from eupago.models.customer import Customer
 from eupago.models.payment import PaymentResult, PaymentStatus
@@ -16,6 +16,11 @@ _PATH_AUTHORIZE = f"{API_PREFIX}/creditcard/authorize"
 _PATH_CAPTURE = f"{API_PREFIX}/creditcard/capture"
 _PATH_SUBSCRIPTION = f"{API_PREFIX}/creditcard/subscription"
 _PATH_SUBSCRIPTION_PAYMENT = f"{API_PREFIX}/creditcard/payment"
+
+# Management API surface for subscriptions
+_MGMT_SUBSCRIPTIONS = f"{MANAGEMENT_PREFIX}/subscriptions"
+_MGMT_SUBSCRIPTION_EDIT = f"{MANAGEMENT_PREFIX}/creditcard/edit"
+_MGMT_SUBSCRIPTION_REVOKE = f"{MANAGEMENT_PREFIX}/subscriptions/revoke"
 
 
 def _is_success(data: dict[str, Any]) -> bool:
@@ -465,3 +470,119 @@ class CreditCardService(BaseService):
         path = f"{_PATH_SUBSCRIPTION_PAYMENT}/{recurrent_id}"
         response = await self._request_async("POST", path, json=body)
         return _parse_response(response.json(), order_id, amount)
+
+    # ------------------------------------------------------------------
+    # Subscription management (Management API — requires OAuth or
+    # management_bearer on the EupagoClient).
+    # ------------------------------------------------------------------
+
+    def list_subscriptions(self) -> list[dict[str, Any]]:
+        """List every subscription on the channel.
+
+        Each row carries ``reference`` (public), ``identifier`` (merchant id),
+        ``eupagoToken`` (the hex passed to :meth:`charge_subscription` as
+        ``recurrent_id``), ``status``, ``payment``, ``creationDate`` and
+        ``service``. The integer ``subscriptionId`` used by
+        :meth:`get_subscription` / :meth:`edit_subscription` /
+        :meth:`revoke_subscription` is **not** in the list response — you
+        have to read it from the backoffice URL or by enumerating.
+        """
+        response = self._request("GET", _MGMT_SUBSCRIPTIONS, auth="oauth")
+        data = response.json()
+        return list(data.get("data", []))
+
+    async def list_subscriptions_async(self) -> list[dict[str, Any]]:
+        response = await self._request_async("GET", _MGMT_SUBSCRIPTIONS, auth="oauth")
+        data = response.json()
+        return list(data.get("data", []))
+
+    def get_subscription(self, subscription_id: str | int) -> dict[str, Any]:
+        """Fetch one subscription. ``subscription_id`` is the integer
+        identifier from the backoffice URL (NOT the ``eupagoToken``).
+        """
+        response = self._request("GET", f"{_MGMT_SUBSCRIPTIONS}/{subscription_id}", auth="oauth")
+        data = response.json()
+        details: dict[str, Any] = data.get("subsDetails", {})
+        return details
+
+    async def get_subscription_async(self, subscription_id: str | int) -> dict[str, Any]:
+        response = await self._request_async(
+            "GET", f"{_MGMT_SUBSCRIPTIONS}/{subscription_id}", auth="oauth"
+        )
+        data = response.json()
+        details: dict[str, Any] = data.get("subsDetails", {})
+        return details
+
+    def edit_subscription(
+        self,
+        subscription_id: str | int,
+        *,
+        collection_day: int | None = None,
+        auto_process: bool | None = None,
+    ) -> dict[str, Any]:
+        """Edit billing options on a registered subscription.
+
+        - ``collection_day``: 1..28, day of month eupago bills.
+        - ``auto_process``: ``True`` to let eupago bill automatically on
+          ``collection_day`` of each period; ``False`` to require explicit
+          :meth:`charge_subscription` calls.
+
+        Eupago recomputes ``nextCollectionDate`` server-side.
+        """
+        form: dict[str, Any] = {}
+        if collection_day is not None:
+            form["collectionDay"] = str(collection_day)
+        if auto_process is not None:
+            form["autoProcess"] = "1" if auto_process else "0"
+        if not form:
+            raise ValidationError("edit_subscription requires at least one field to change")
+        response = self._request(
+            "PUT",
+            f"{_MGMT_SUBSCRIPTION_EDIT}/{subscription_id}",
+            data=form,
+            auth="oauth",
+        )
+        result: dict[str, Any] = response.json()
+        return result
+
+    async def edit_subscription_async(
+        self,
+        subscription_id: str | int,
+        *,
+        collection_day: int | None = None,
+        auto_process: bool | None = None,
+    ) -> dict[str, Any]:
+        form: dict[str, Any] = {}
+        if collection_day is not None:
+            form["collectionDay"] = str(collection_day)
+        if auto_process is not None:
+            form["autoProcess"] = "1" if auto_process else "0"
+        if not form:
+            raise ValidationError("edit_subscription requires at least one field to change")
+        response = await self._request_async(
+            "PUT",
+            f"{_MGMT_SUBSCRIPTION_EDIT}/{subscription_id}",
+            data=form,
+            auth="oauth",
+        )
+        result: dict[str, Any] = response.json()
+        return result
+
+    def revoke_subscription(self, subscription_id: str | int) -> dict[str, Any]:
+        """Cancel an active subscription. Returns the eupago response.
+
+        Only valid for subscriptions in an active state (not ``Pendente``):
+        the API returns ``SUBSCRIPTION_NOT_FOUND`` otherwise.
+        """
+        response = self._request(
+            "POST", f"{_MGMT_SUBSCRIPTION_REVOKE}/{subscription_id}", auth="oauth"
+        )
+        result: dict[str, Any] = response.json()
+        return result
+
+    async def revoke_subscription_async(self, subscription_id: str | int) -> dict[str, Any]:
+        response = await self._request_async(
+            "POST", f"{_MGMT_SUBSCRIPTION_REVOKE}/{subscription_id}", auth="oauth"
+        )
+        result: dict[str, Any] = response.json()
+        return result
