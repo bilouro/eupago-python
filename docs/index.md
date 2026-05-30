@@ -31,8 +31,16 @@ print(payment.status)          # PaymentStatus.PENDING
 
 | Method | Description | Module |
 |---|---|---|
-| **MB WAY** | Mobile payment (5 min approval) | `client.mbway` |
-| **Multibanco** | ATM/online banking reference | `client.multibanco` |
+| **[MB WAY](payments/mbway.md)** | Mobile payment via push notification (5 min approval) | `client.mbway` |
+| **[Multibanco](payments/multibanco.md)** | ATM / online-banking reference, paid 1–30 days later | `client.multibanco` |
+| **[Credit Card](payments/credit-card.md)** | Hosted card form with 3D-Secure / OTP — supports auth+capture and recurring subscriptions | `client.credit_card` |
+| **[Apple Pay](payments/apple-pay.md)** | Apple Wallet token for iOS apps and Safari | `client.apple_pay` |
+| **[Google Pay](payments/google-pay.md)** | Google Pay token for Android apps and Chrome | `client.google_pay` |
+| **[Pay By Link](payments/pay-by-link.md)** | Single hosted URL — customer picks the method (MB WAY, Multibanco, Card, Apple/Google Pay, Cofidis…) | `client.pay_by_link` |
+| **[Refunds](payments/refund.md)** | Total or partial refunds for any paid transaction (OAuth) | `client.refunds` |
+
+Webhooks (cleartext **and** AES-256-CBC encrypted) and v1.0 / v2.0 parsing are
+covered by `client.webhooks.parse(...)` — see [Webhooks](webhooks/index.md).
 
 ## Why this SDK?
 
