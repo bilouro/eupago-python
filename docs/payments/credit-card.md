@@ -114,6 +114,47 @@ client.credit_card.charge_subscription(
     (verified against the readme.io spec); enable the feature in the
     backoffice or via support.
 
+## Subscription management (Management API)
+
+Once a subscription exists you can manage it via four methods on the same
+service. These require Management API auth — pass
+`client_id`/`client_secret` or `management_bearer` to `EupagoClient`.
+
+```python
+# List every subscription on the channel
+for sub in client.credit_card.list_subscriptions():
+    print(sub["identifier"], sub["status"], sub["eupagoToken"])
+
+# Fetch one (uses the integer subscription_id — see note below)
+detail = client.credit_card.get_subscription(4756)
+print(detail["nextCollectionDate"])
+
+# Change billing options
+client.credit_card.edit_subscription(
+    4756,
+    collection_day=15,     # day of month (1..28)
+    auto_process=True,     # True = eupago bills automatically every period
+)
+
+# Cancel — only works for active subscriptions, returns SUBSCRIPTION_NOT_FOUND on Pendente
+client.credit_card.revoke_subscription(4756)
+```
+
+!!! note "Auto vs. manual billing"
+    With `auto_process=True` eupago bills the registered card on every
+    `collection_day` of the chosen `periodicity` — `nextCollectionDate`
+    appears in the subscription detail. With `auto_process=False` you call
+    `charge_subscription(recurrent_id=...)` whenever you want to bill.
+
+!!! warning "Integer subscription_id quirk"
+    The 4 methods above take the **integer** `subscriptionId` (e.g. `4756`).
+    The hex `eupagoToken` from `create_subscription` is what
+    `charge_subscription` expects — it's a different identifier.
+    Currently the integer is **not** returned by `list_subscriptions` (a
+    real eupago UX gap); you have to read it from the backoffice URL when
+    editing a subscription. This may improve when eupago issues stable
+    OAuth credentials.
+
 ## Refund
 
 ```python

@@ -114,6 +114,47 @@ client.credit_card.charge_subscription(
     (verificado contra a spec readme.io); activa a feature no
     backoffice ou via suporte.
 
+## Gestão de subscrições (Management API)
+
+Quatro métodos no mesmo service permitem gerir uma subscrição existente.
+Precisam de auth da Management API — passa `client_id`/`client_secret`
+ou `management_bearer` ao `EupagoClient`.
+
+```python
+# Listar todas as subscrições do canal
+for sub in client.credit_card.list_subscriptions():
+    print(sub["identifier"], sub["status"], sub["eupagoToken"])
+
+# Obter detalhe (usa o INTEIRO subscription_id — ver nota abaixo)
+detail = client.credit_card.get_subscription(4756)
+print(detail["nextCollectionDate"])
+
+# Mudar opções de cobrança
+client.credit_card.edit_subscription(
+    4756,
+    collection_day=15,     # dia do mês (1..28)
+    auto_process=True,     # True = eupago cobra sozinha todo o período
+)
+
+# Cancelar — só funciona em subscrições activas; em "Pendente" devolve SUBSCRIPTION_NOT_FOUND
+client.credit_card.revoke_subscription(4756)
+```
+
+!!! note "Auto vs. manual"
+    Com `auto_process=True` a eupago cobra o cartão registado em cada
+    `collection_day` da `periodicity` escolhida — `nextCollectionDate`
+    fica visível no detalhe. Com `auto_process=False` chamas
+    `charge_subscription(recurrent_id=...)` quando quiseres cobrar.
+
+!!! warning "Quirk do subscription_id inteiro"
+    Os 4 métodos acima usam o **inteiro** `subscriptionId` (ex: `4756`).
+    O hex `eupagoToken` que vem do `create_subscription` é o que
+    `charge_subscription` espera — é um identificador diferente.
+    Actualmente o inteiro **não vem** no `list_subscriptions` (gap real
+    de UX no eupago); tens de o ler do URL do backoffice quando editas
+    uma subscrição. Isto pode melhorar quando o eupago emitir
+    credenciais OAuth estáveis.
+
 ## Reembolso
 
 ```python

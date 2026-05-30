@@ -16,6 +16,9 @@ AUTHORIZE_URL = f"{SANDBOX}/api/v1.02/creditcard/authorize"
 CAPTURE_URL = f"{SANDBOX}/api/v1.02/creditcard/capture"
 SUBSCRIPTION_URL = f"{SANDBOX}/api/v1.02/creditcard/subscription"
 SUBSCRIPTION_PAYMENT_URL = f"{SANDBOX}/api/v1.02/creditcard/payment"
+MGMT_SUBS_LIST = f"{SANDBOX}/api/management/v1.02/subscriptions"
+MGMT_SUBS_EDIT = f"{SANDBOX}/api/management/v1.02/creditcard/edit"
+MGMT_SUBS_REVOKE = f"{SANDBOX}/api/management/v1.02/subscriptions/revoke"
 
 
 @pytest.fixture
@@ -353,3 +356,111 @@ async def test_charge_subscription_async_success(client: EupagoClient) -> None:
     )
     assert result.transaction_id == "charge-async-001"
     await client.aclose()
+
+
+# ---- Subscription management (Management API) -----------------------------
+
+_LIST_RESPONSE = {
+    "transactionStatus": "Success",
+    "data": [
+        {
+            "reference": "475689",
+            "identifier": "SUB-33000f",
+            "status": "Pendente",
+            "payment": {"amount": "19.90", "periodicity": "Mensal"},
+            "creationDate": "2026-05-30 14:14:53",
+            "eupagoToken": "c20e18387478c66c482d9fb524d0144e",
+            "service": "Credit Card",
+        }
+    ],
+}
+
+_DETAIL_RESPONSE = {
+    "transactionStatus": "Success",
+    "subsDetails": {
+        "subscriptionId": "4756",
+        "reference": "475689",
+        "identifier": "SUB-33000f",
+        "status": "Pendente",
+        "payment": {
+            "amount": "19.90",
+            "periodicity": "Mensal",
+            "autoProcess": "1",
+            "collectionDay": "15",
+        },
+        "nextCollectionDate": "2026-06-15",
+        "eupagoToken": "c20e18387478c66c482d9fb524d0144e",
+    },
+}
+
+
+@pytest.fixture
+def mgmt_client() -> EupagoClient:
+    """Client with management_bearer wired — exercises the OAuth-equivalent path."""
+    return EupagoClient(api_key="k", management_bearer="bo-bearer", sandbox=True)
+
+
+@respx.mock
+def test_list_subscriptions(mgmt_client: EupagoClient) -> None:
+    respx.get(MGMT_SUBS_LIST).mock(return_value=Response(200, json=_LIST_RESPONSE))
+    subs = mgmt_client.credit_card.list_subscriptions()
+    assert len(subs) == 1
+    assert subs[0]["eupagoToken"] == "c20e18387478c66c482d9fb524d0144e"
+
+
+@respx.mock
+def test_get_subscription(mgmt_client: EupagoClient) -> None:
+    respx.get(f"{MGMT_SUBS_LIST}/4756").mock(return_value=Response(200, json=_DETAIL_RESPONSE))
+    detail = mgmt_client.credit_card.get_subscription(4756)
+    assert detail["subscriptionId"] == "4756"
+    assert detail["nextCollectionDate"] == "2026-06-15"
+    assert detail["payment"]["autoProcess"] == "1"
+
+
+@respx.mock
+def test_edit_subscription_sends_form_body(mgmt_client: EupagoClient) -> None:
+    route = respx.put(f"{MGMT_SUBS_EDIT}/4756").mock(
+        return_value=Response(200, json={"transactionStatus": "Success"})
+    )
+    mgmt_client.credit_card.edit_subscription(4756, collection_day=20, auto_process=True)
+
+    req = route.calls[0].request
+    # eupago expects application/x-www-form-urlencoded for this endpoint;
+    # the SDK transport must override the default Content-Type.
+    assert req.headers["content-type"] == "application/x-www-form-urlencoded"
+    assert req.content == b"collectionDay=20&autoProcess=1"
+
+
+def test_edit_subscription_requires_a_field(mgmt_client: EupagoClient) -> None:
+    with pytest.raises(ValidationError, match="at least one field"):
+        mgmt_client.credit_card.edit_subscription(4756)
+
+
+@respx.mock
+def test_revoke_subscription(mgmt_client: EupagoClient) -> None:
+    respx.post(f"{MGMT_SUBS_REVOKE}/4756").mock(
+        return_value=Response(200, json={"transactionStatus": "Success"})
+    )
+    result = mgmt_client.credit_card.revoke_subscription(4756)
+    assert result == {"transactionStatus": "Success"}
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_list_subscriptions_async(mgmt_client: EupagoClient) -> None:
+    respx.get(MGMT_SUBS_LIST).mock(return_value=Response(200, json=_LIST_RESPONSE))
+    subs = await mgmt_client.credit_card.list_subscriptions_async()
+    assert len(subs) == 1
+    await mgmt_client.aclose()
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_edit_subscription_async(mgmt_client: EupagoClient) -> None:
+    route = respx.put(f"{MGMT_SUBS_EDIT}/4756").mock(
+        return_value=Response(200, json={"transactionStatus": "Success"})
+    )
+    await mgmt_client.credit_card.edit_subscription_async(4756, auto_process=False)
+    req = route.calls[0].request
+    assert req.content == b"autoProcess=0"
+    await mgmt_client.aclose()

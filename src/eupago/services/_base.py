@@ -28,6 +28,7 @@ class BaseService:
         path: str,
         *,
         json: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
         auth: str | None = None,
     ) -> httpx.Response:
@@ -51,7 +52,12 @@ class BaseService:
             headers = self._oauth.apply_header(headers)
 
         return self._transport.request(
-            method, path, json=body if body else None, params=params, headers=headers
+            method,
+            path,
+            json=body if body else None,
+            data=data,
+            params=params,
+            headers=headers,
         )
 
     async def _request_async(
@@ -60,6 +66,7 @@ class BaseService:
         path: str,
         *,
         json: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
         auth: str | None = None,
     ) -> httpx.Response:
@@ -83,5 +90,10 @@ class BaseService:
             headers = await self._oauth.apply_header_async(headers)
 
         return await self._transport.request_async(
-            method, path, json=body if body else None, params=params, headers=headers
+            method,
+            path,
+            json=body if body else None,
+            data=data,
+            params=params,
+            headers=headers,
         )

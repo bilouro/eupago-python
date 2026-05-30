@@ -64,5 +64,31 @@ print(f"Cobrança: {charge.status} ({charge.transaction_id})")
 #
 # refund = client.refunds.refund(
 #     transaction_id=charge.transaction_id,
-#     value=Decimal("19.90"),
+#     amount=Decimal("19.90"),
 # )
+
+
+# --- Gestão de subscrições (Management API) ---
+#
+# Requer OAuth (client_id/client_secret) ou ``management_bearer=<token>``.
+# IMPORTANTE: as próximas operações usam o INTEIRO ``subscription_id``
+# (ex: 4756), não o hex ``eupagoToken`` que vem do create_subscription.
+# O inteiro está visível no URL do backoffice quando abres uma subscrição.
+
+# Listar todas as subscrições do canal
+for sub in client.credit_card.list_subscriptions():
+    print(f"{sub['identifier']} - {sub['status']} - {sub['eupagoToken'][:16]}…")
+
+# Detalhe (incluindo nextCollectionDate calculada pela eupago)
+detail = client.credit_card.get_subscription(4756)
+print(f"Próxima cobrança: {detail['nextCollectionDate']}")
+
+# Mudar dia de cobrança + activar auto-recorrência (a eupago cobra sozinha)
+client.credit_card.edit_subscription(
+    4756,
+    collection_day=15,  # dia do mes (1-28)
+    auto_process=True,  # True = eupago cobra automaticamente; False = chamas charge_subscription
+)
+
+# Cancelar (só funciona em subscrições activas, não em "Pendente")
+# client.credit_card.revoke_subscription(4756)
