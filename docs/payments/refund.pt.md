@@ -61,22 +61,39 @@ client = EupagoClient(
     sandbox=True,
 )
 
-# Reembolso total
+# Reembolso total (MB WAY ou Cartão — sem IBAN)
 result = client.refunds.refund(
-    transaction_id="113068862",
-    value=Decimal("64.00"),
+    transaction_id="29748010",
+    amount=Decimal("3.45"),
     reason="Cliente cancelou",
 )
 
 assert result.status == PaymentStatus.REFUNDED
+refund_id = result.raw_response["refundId"]  # ID do reembolso (audit)
 ```
+
+## Multibanco exige IBAN
+
+Multibanco liquida banco-a-banco, logo o reembolso precisa de saber para
+que conta devolver o dinheiro:
+
+```python
+client.refunds.refund(
+    transaction_id="113068862",
+    amount=Decimal("40.00"),
+    iban="PT50000201231234567890154",   # IBAN do cliente
+    # bic="BACTPTPT",                   # normalmente desnecessário
+)
+```
+
+MB WAY e Cartão liquidam wallet-/cartão-a-cartão e não precisam de IBAN.
 
 ## Reembolso parcial
 
 ```python
 parcial = client.refunds.refund(
-    transaction_id="113068862",
-    value=Decimal("20.00"),  # menos que o total
+    transaction_id="29748010",
+    amount=Decimal("1.00"),  # menos que o total
     reason="Devolução parcial — 1 item de 3",
 )
 ```
@@ -85,17 +102,37 @@ parcial = client.refunds.refund(
 
 | Parâmetro        | Tipo      | Obrigatório | Descrição |
 |------------------|-----------|-------------|-----------|
-| `transaction_id` | `str`     | Sim         | ID da transação original (da resposta do pagamento ou do webhook) |
-| `value`          | `Decimal` | Sim         | Valor a reembolsar (≤ valor original) |
-| `currency`       | `str`     | Não         | ISO 4217. Default `"EUR"` |
-| `reason`         | `str`     | Não         | Texto livre, fica no histórico da transação |
+| `transaction_id` | `str`     | Sim         | ID da transação original (da resposta ou do webhook) |
+| `amount`         | `Decimal` | Sim         | Valor a reembolsar (≤ valor original) |
+| `reason`         | `str`     | Não         | Texto livre, fica no histórico |
+| `iban`           | `str`     | Sim para Multibanco | Conta do cliente para reembolso banco-a-banco |
+| `bic`            | `str`     | Não         | Código de routing; raramente necessário |
 
 ## Async
 
 ```python
 async with EupagoClient(api_key="...", client_id="...", client_secret="...") as c:
     result = await c.refunds.refund_async(
-        transaction_id="113068862",
-        value=Decimal("64.00"),
+        transaction_id="29748010",
+        amount=Decimal("3.45"),
     )
 ```
+
+## Atalho de teste — injectar Bearer do backoffice
+
+O login do backoffice (`/api/auth/login`) devolve um Bearer que funciona
+nos mesmos endpoints `/api/management/*`, com os mesmos shapes. Enquanto
+esperas pelas credenciais OAuth do suporte, podes correr reembolsos a
+partir de um test/script com esse bearer:
+
+```python
+client = EupagoClient(
+    api_key="...",
+    management_bearer="<bearer de /api/auth/login>",
+    sandbox=True,
+)
+client.refunds.refund(transaction_id="...", amount=Decimal("..."))
+```
+
+Isto bypass OAuth completamente. Em produção, prefere
+`client_id`/`client_secret`.

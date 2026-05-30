@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from eupago._auth import ApiKeyAuth, OAuthAuth
+from eupago._auth import ApiKeyAuth, OAuthAuth, StaticBearerAuth
 from eupago._config import (
     DEFAULT_MAX_RETRIES,
     DEFAULT_TIMEOUT,
@@ -27,11 +27,19 @@ class EupagoClient:
         *,
         client_id: str | None = None,
         client_secret: str | None = None,
+        management_bearer: str | None = None,
         webhook_secret: str | None = None,
         sandbox: bool = False,
         timeout: float = DEFAULT_TIMEOUT,
         max_retries: int = DEFAULT_MAX_RETRIES,
     ) -> None:
+        """
+        :param management_bearer: pre-obtained Bearer token for ``/api/management/*``.
+            Overrides ``client_id``/``client_secret`` when set. Intended for tests
+            or one-off scripts where the caller already has a token (e.g. from the
+            backoffice login flow); production callers should prefer OAuth via
+            ``client_id``/``client_secret``.
+        """
         from eupago import __version__
 
         base_url = SANDBOX_BASE_URL if sandbox else PRODUCTION_BASE_URL
@@ -43,9 +51,11 @@ class EupagoClient:
             max_retries=max_retries,
         )
         self._auth = ApiKeyAuth(api_key)
-        self._oauth: OAuthAuth | None = None
+        self._oauth: OAuthAuth | StaticBearerAuth | None = None
 
-        if client_id and client_secret:
+        if management_bearer:
+            self._oauth = StaticBearerAuth(management_bearer)
+        elif client_id and client_secret:
             self._oauth = OAuthAuth(client_id, client_secret, self._transport)
 
         self._services: dict[str, Any] = {}

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 import httpx
 
 if TYPE_CHECKING:
-    from eupago._auth import ApiKeyAuth, OAuthAuth
+    from eupago._auth import ApiKeyAuth, OAuthAuth, StaticBearerAuth
     from eupago._http import HttpTransport
 
 
@@ -16,7 +16,7 @@ class BaseService:
         self,
         transport: HttpTransport,
         auth: ApiKeyAuth,
-        oauth: OAuthAuth | None = None,
+        oauth: OAuthAuth | StaticBearerAuth | None = None,
     ) -> None:
         self._transport = transport
         self._auth = auth
@@ -44,7 +44,9 @@ class BaseService:
                 from eupago.exceptions import AuthenticationError
 
                 raise AuthenticationError(
-                    "OAuth credentials (client_id, client_secret) required for this operation"
+                    "Management API authentication required — pass either "
+                    "client_id/client_secret (OAuth) or management_bearer "
+                    "to EupagoClient."
                 )
             headers = self._oauth.apply_header(headers)
 
@@ -74,7 +76,9 @@ class BaseService:
                 from eupago.exceptions import AuthenticationError
 
                 raise AuthenticationError(
-                    "OAuth credentials (client_id, client_secret) required for this operation"
+                    "Management API authentication required — pass either "
+                    "client_id/client_secret (OAuth) or management_bearer "
+                    "to EupagoClient."
                 )
             headers = await self._oauth.apply_header_async(headers)
 

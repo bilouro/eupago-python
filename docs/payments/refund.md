@@ -61,22 +61,40 @@ client = EupagoClient(
     sandbox=True,
 )
 
-# Full refund
+# Full refund for an MB WAY or Credit Card transaction (no IBAN needed)
 result = client.refunds.refund(
-    transaction_id="113068862",
-    value=Decimal("64.00"),
+    transaction_id="29748010",
+    amount=Decimal("3.45"),
     reason="Customer cancelled",
 )
 
 assert result.status == PaymentStatus.REFUNDED
+refund_id = result.raw_response["refundId"]  # eupago refund id (for audit)
 ```
+
+## Multibanco refunds need an IBAN
+
+Multibanco settles bank-to-bank, so the refund needs to know where to send
+the money back:
+
+```python
+client.refunds.refund(
+    transaction_id="113068862",
+    amount=Decimal("40.00"),
+    iban="PT50000201231234567890154",   # customer IBAN
+    # bic="BACTPTPT",                   # usually not needed
+)
+```
+
+MB WAY and Credit Card refunds settle wallet-/card-to-card respectively
+and don't need IBAN/BIC.
 
 ## Partial refund
 
 ```python
 partial = client.refunds.refund(
-    transaction_id="113068862",
-    value=Decimal("20.00"),  # less than the original amount
+    transaction_id="29748010",
+    amount=Decimal("1.00"),  # less than the original amount
     reason="Partial return — 1 item of 3",
 )
 ```
@@ -86,16 +104,37 @@ partial = client.refunds.refund(
 | Parameter        | Type      | Required | Description |
 |------------------|-----------|----------|-------------|
 | `transaction_id` | `str`     | Yes      | ID of the original transaction (from the payment response or the webhook) |
-| `value`          | `Decimal` | Yes      | Amount to refund (≤ original amount) |
-| `currency`       | `str`     | No       | ISO 4217. Default `"EUR"` |
+| `amount`         | `Decimal` | Yes      | Amount to refund (≤ original amount) |
 | `reason`         | `str`     | No       | Free-text reason, stored in the transaction history |
+| `iban`           | `str`     | Yes for Multibanco | Customer bank account for bank-to-bank refunds |
+| `bic`            | `str`     | No       | Routing code; rarely required |
 
 ## Async
 
 ```python
 async with EupagoClient(api_key="...", client_id="...", client_secret="...") as c:
     result = await c.refunds.refund_async(
-        transaction_id="113068862",
-        value=Decimal("64.00"),
+        transaction_id="29748010",
+        amount=Decimal("3.45"),
     )
 ```
+
+## Test escape hatch — injecting a backoffice Bearer
+
+The eupago backoffice login (`/api/auth/login`) returns a Bearer token
+that works on the same `/api/management/*` endpoints, with the body
+shapes the management API expects. While you wait for the OAuth
+credentials from support, you can drive refunds from a test/script with
+that bearer:
+
+```python
+client = EupagoClient(
+    api_key="...",
+    management_bearer="<bearer from /api/auth/login>",
+    sandbox=True,
+)
+client.refunds.refund(transaction_id="...", amount=Decimal("..."))
+```
+
+This bypasses OAuth entirely. Production callers should still use
+`client_id`/`client_secret`.

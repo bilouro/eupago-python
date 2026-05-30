@@ -51,7 +51,7 @@ def test_service_oauth_without_credentials_raises(
     transport: HttpTransport, auth: ApiKeyAuth
 ) -> None:
     service = BaseService(transport, auth, oauth=None)
-    with pytest.raises(AuthenticationError, match="OAuth credentials"):
+    with pytest.raises(AuthenticationError, match="Management API authentication"):
         service._request("POST", "/test", auth="oauth")
 
 
@@ -86,7 +86,7 @@ async def test_service_async_oauth_without_credentials_raises(
     transport: HttpTransport, auth: ApiKeyAuth
 ) -> None:
     service = BaseService(transport, auth, oauth=None)
-    with pytest.raises(AuthenticationError, match="OAuth credentials"):
+    with pytest.raises(AuthenticationError, match="Management API authentication"):
         await service._request_async("POST", "/test", auth="oauth")
     await transport.aclose()
 
