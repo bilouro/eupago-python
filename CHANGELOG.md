@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **MB WAY** request body now includes the required `countryCode` (default `"351"`) and `customerPhone` on every endpoint, not only `create`. Without `countryCode` the `authorize` endpoint returns `CUSTOMERPHONE_MISSING` / `BAD_REQUEST` even though the value was present, because the eupago spec ties the two together.
+- **MB WAY capture** body shape: was `{"payment": {"amount": X}}`, eupago expects `{"payment": {"value": X, "currency": "EUR"}}`. The old body returned `AMOUNT_MISSING`. Fixed and asserted by unit test.
+- **Credit Card capture** now sends the full payment body (amount object + URLs) — the previous empty body returned `AMOUNT_MISSING`. New required parameter `amount`; optional `success_url`/`error_url`/`back_url`/`customer`/`order_id`.
+- **Credit Card subscription**:
+  - `create_subscription` now wraps the request with the required `subscription` block (`date`, `autoProcess`, `collectionDay`, `periodicity`, `limitDate`). Without it the endpoint returns 500 BAD_REQUEST. New optional parameters: `start_date`, `periodicity` (default `"Mensal"`), `collection_day` (default `1`), `limit_date` (default 1 year out), `auto_process` (default `False`).
+  - Response parser now reads `subscriptionID` and `referenceSubs` (the names the subscription endpoint actually uses) in addition to `transactionID`/`reference`. The `subscriptionID` is mapped to `PaymentResult.transaction_id` so it can be passed straight to `charge_subscription`.
+  - `charge_subscription` takes `recurrent_id: str` (eupago returns a hex string, not an int) and accepts the required `success_url`/`error_url`/`back_url` + optional `days_to_capture`.
+
 ### Added
 - **MB WAY**: `create_payment`, `authorize`, `capture` (sync + async). Live-verified against the eupago sandbox.
 - **Multibanco**: `create_reference`, `get_info` (sync + async). Live-verified, including the paid `info` response.

@@ -57,6 +57,7 @@ def test_create_payment_request_body(client: EupagoClient) -> None:
 
     payload = json.loads(route.calls[0].request.content)
     assert payload["payment"]["customerPhone"] == "912345678"
+    assert payload["payment"]["countryCode"] == "351"
     assert payload["payment"]["amount"] == {"value": 10.0, "currency": "EUR"}
     assert payload["payment"]["identifier"] == "ORD-BODY"
 
@@ -126,7 +127,7 @@ def test_create_payment_validates_empty_phone(client: EupagoClient) -> None:
 
 @respx.mock
 def test_authorize_success(client: EupagoClient) -> None:
-    respx.post("https://sandbox.eupago.pt/api/v1.02/mbway/authorize").mock(
+    route = respx.post("https://sandbox.eupago.pt/api/v1.02/mbway/authorize").mock(
         return_value=Response(
             201, json={"transactionStatus": "Success", "transactionID": "txn-auth-789"}
         )
@@ -138,13 +139,37 @@ def test_authorize_success(client: EupagoClient) -> None:
         phone_number="912345678",
     )
 
+    payload = json.loads(route.calls[0].request.content)
+    # authorize is the strict endpoint that demands both customerPhone and countryCode
+    assert payload["payment"]["customerPhone"] == "912345678"
+    assert payload["payment"]["countryCode"] == "351"
+    assert payload["payment"]["amount"] == {"value": 25.0, "currency": "EUR"}
     assert result.transaction_id == "txn-auth-789"
     assert result.status == PaymentStatus.PENDING
 
 
 @respx.mock
+@pytest.mark.asyncio
+async def test_authorize_async_success(client: EupagoClient) -> None:
+    respx.post("https://sandbox.eupago.pt/api/v1.02/mbway/authorize").mock(
+        return_value=Response(
+            201, json={"transactionStatus": "Success", "transactionID": "txn-async-auth"}
+        )
+    )
+
+    result = await client.mbway.authorize_async(
+        order_id="ORD-ASYNC-AUTH",
+        amount=Decimal("25.00"),
+        phone_number="912345678",
+    )
+    assert result.transaction_id == "txn-async-auth"
+    assert result.status == PaymentStatus.PENDING
+    await client.aclose()
+
+
+@respx.mock
 def test_capture_success(client: EupagoClient) -> None:
-    respx.post("https://sandbox.eupago.pt/api/v1.02/mbway/capture/txn-auth-789").mock(
+    route = respx.post("https://sandbox.eupago.pt/api/v1.02/mbway/capture/txn-auth-789").mock(
         return_value=Response(
             201, json={"transactionStatus": "Success", "transactionID": "txn-auth-789"}
         )
@@ -155,8 +180,29 @@ def test_capture_success(client: EupagoClient) -> None:
         amount=Decimal("25.00"),
     )
 
+    # eupago capture body is {"payment": {"value": X, "currency": "EUR"}} per the
+    # readme.io reference — not {"payment": {"amount": X}}. Guard against regressions.
+    payload = json.loads(route.calls[0].request.content)
+    assert payload == {"payment": {"value": 25.0, "currency": "EUR"}}
     assert result.transaction_id == "txn-auth-789"
     assert result.status == PaymentStatus.PAID
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_capture_async_success(client: EupagoClient) -> None:
+    respx.post("https://sandbox.eupago.pt/api/v1.02/mbway/capture/txn-async-cap").mock(
+        return_value=Response(
+            201, json={"transactionStatus": "Success", "transactionID": "txn-async-cap"}
+        )
+    )
+
+    result = await client.mbway.capture_async(
+        transaction_id="txn-async-cap",
+        amount=Decimal("12.50"),
+    )
+    assert result.status == PaymentStatus.PAID
+    await client.aclose()
 
 
 @respx.mock

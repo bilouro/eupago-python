@@ -17,22 +17,31 @@ MB WAY, Multibanco, and more — in 5 lines of Python.
 
 ## Status
 
-What's implemented and verified end-to-end against the eupago sandbox today
-(every method exercised by an integration test that actually marks a payment
-as Paid in the sandbox backoffice and validates the captured webhook):
+Per-operation live coverage against the eupago sandbox. *Live-validated*
+means an integration test creates the payment, drives it to Paid, and
+asserts the captured webhook matches; *Live SDK call only* means the
+endpoint was actually called against the sandbox but the full paid flow
+needs a feature the demo channel doesn't have provisioned.
 
-| Area | Status |
-|---|---|
-| **MB WAY** — `create_payment`, `authorize`, `capture` (sync + async) | ✅ Live-validated |
-| **Multibanco** — `create_reference`, `get_info` (sync + async) | ✅ Live-validated |
-| **Credit Card** — `create_payment`, `authorize`, `capture`, `create_subscription`, `charge_subscription` (sync + async) | ✅ Full 3DS + paid-webhook flow live-validated via Playwright (test card `4018810000150015`, OTP `0101`) |
-| **Apple Pay** — `client.apple_pay.create_payment` (sync + async) | ✅ Implemented + unit-tested (live verification needs a real Apple Wallet token) |
-| **Google Pay** — `client.google_pay.create_payment` (sync + async) | ✅ Implemented + unit-tested (live verification needs a real Google Pay token) |
-| **Pay By Link** — `client.pay_by_link.create_payment` (sync + async) | ✅ Live-validated against the sandbox (creates real `paybylink/form/...` URLs) |
-| **Refunds** — `client.refunds.refund` (sync + async, OAuth) | ✅ Implemented + unit-tested. Live verification needs `client_id`/`client_secret` (issued by eupago support, **not** self-service in the backoffice) and a paid transaction. Note: eupago doesn't fire a webhook on refunds — verify from the response. |
-| **Webhooks 2.0** — POST, HMAC signature, both cleartext **and** AES-256-CBC encrypted | ✅ Live-validated |
-| **Webhooks 1.0** — legacy GET | ✅ Implemented |
-| Core: typed errors, retries, sync+async, audit hook, PII redaction | ✅ |
+| Operation | Unit | Live |
+|---|:-:|---|
+| `mbway.create_payment` (sync + async) | ✅ | ✅ Backoffice mark-paid → webhook PAID |
+| `mbway.authorize` (sync + async) | ✅ | ⚠️ Endpoint requires *Auth & Capture* channel feature; live test skips on demo channel |
+| `mbway.capture` (sync + async) | ✅ | ⚠️ Same — gated by *Auth & Capture* |
+| `multibanco.create_reference` (sync + async) | ✅ | ✅ Backoffice mark-paid → webhook PAID (encrypted) |
+| `multibanco.get_info` (sync + async) | ✅ | ✅ Read back PAID after webhook |
+| `credit_card.create_payment` (sync + async) | ✅ | ✅ Playwright drives Shift4 form + Credorax ACS challenge (`4018810000150015`, OTP `0101`) → webhook PAID |
+| `credit_card.authorize` (sync + async) | ✅ | ⚠️ Endpoint returns 201 + redirectUrl, but form posts to errorUrl on demo channel (*Auth & Capture* not provisioned); test skips |
+| `credit_card.capture` (sync + async) | ✅ | ⚠️ Returns `PAYMENT_NOT_CAPTIVE` on demo channel; test skips |
+| `credit_card.create_subscription` (sync + async) | ✅ | ⚠️ Endpoint returns 201 + `subscriptionID`, but form posts to errorUrl on demo channel (*Subscription* not provisioned); test skips |
+| `credit_card.charge_subscription` (sync + async) | ✅ | ⚠️ Same channel gap blocks the registration step |
+| `apple_pay.create_payment` (sync + async) | ✅ | ❌ Requires a real Apple Wallet token from a device |
+| `google_pay.create_payment` (sync + async) | ✅ | ❌ Requires a real Google Pay token from a device |
+| `pay_by_link.create_payment` (sync + async) | ✅ | ✅ Real `paybylink/form/...` URL generated; full customer-completes flow needs at least one method enabled on the channel |
+| `refunds.refund` (sync + async, OAuth) | ✅ | ❌ Needs `client_id`/`client_secret` (issued by eupago support on request — not self-service); eupago doesn't fire a refund webhook, so verification is via the response |
+| Webhooks v2.0 (POST + HMAC, cleartext **and** AES-256-CBC encrypted) | ✅ | ✅ |
+| Webhooks v1.0 (legacy GET) | ✅ | — |
+| HTTP transport, retries, audit hook, PII redaction | ✅ | — |
 
 Planned (see [roadmap in CLAUDE.md](CLAUDE.md)): Direct Debit, Payshop, Cofidis,
 Floa, PIX, Pagaqui, Paysafecard.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 from typing import Any
 
@@ -75,8 +76,11 @@ def _parse_response(
     amount: Decimal,
     status: PaymentStatus = PaymentStatus.PENDING,
 ) -> PaymentResult:
-    transaction_id = data.get("transactionID")
-    reference = data.get("reference")
+    # Subscription endpoints return ``subscriptionID`` / ``referenceSubs``;
+    # the regular ones return ``transactionID`` / ``reference``. We map both
+    # into the same PaymentResult so callers don't care which they got.
+    transaction_id = data.get("transactionID") or data.get("subscriptionID")
+    reference = data.get("reference") or data.get("referenceSubs")
     payment_url = data.get("redirectUrl") or data.get("paymentUrl")
 
     if not _is_success(data):
@@ -92,6 +96,52 @@ def _parse_response(
         method="credit_card",
         raw_response=data,
     )
+
+
+def _build_subscription_body(
+    order_id: str,
+    amount: Decimal,
+    *,
+    currency: str = "EUR",
+    customer: Customer | None = None,
+    success_url: str | None = None,
+    error_url: str | None = None,
+    back_url: str | None = None,
+    callback_url: str | None = None,
+    start_date: date | None = None,
+    periodicity: str = "Mensal",
+    collection_day: int = 1,
+    limit_date: date | None = None,
+    auto_process: bool = False,
+    language: str = "PT",
+) -> dict[str, Any]:
+    """Build the create-subscription body.
+
+    eupago requires the nested ``subscription`` block; sending only the regular
+    payment fields returns 500 BAD_REQUEST. Defaults follow the readme.io
+    reference: monthly billing, collection on day 1, merchant-triggered captures
+    (``autoProcess=0``).
+    """
+    body = _build_payment_body(
+        order_id,
+        amount,
+        currency=currency,
+        customer=customer,
+        success_url=success_url,
+        error_url=error_url,
+        back_url=back_url,
+        callback_url=callback_url,
+        language=language,
+    )
+    today = date.today()
+    body["payment"]["subscription"] = {
+        "date": (start_date or today).isoformat(),
+        "autoProcess": "1" if auto_process else "0",
+        "collectionDay": collection_day,
+        "periodicity": periodicity,
+        "limitDate": (limit_date or today.replace(year=today.year + 1)).isoformat(),
+    }
+    return body
 
 
 class CreditCardService(BaseService):
@@ -222,23 +272,65 @@ class CreditCardService(BaseService):
         response = await self._request_async("POST", _PATH_AUTHORIZE, json=body)
         return _parse_response(response.json(), order_id, amount)
 
-    def capture(self, transaction_id: str) -> PaymentResult:
+    def capture(
+        self,
+        transaction_id: str,
+        amount: Decimal,
+        *,
+        order_id: str | None = None,
+        currency: str = "EUR",
+        success_url: str | None = None,
+        error_url: str | None = None,
+        back_url: str | None = None,
+        customer: Customer | None = None,
+    ) -> PaymentResult:
+        body = _build_payment_body(
+            order_id or transaction_id,
+            amount,
+            currency=currency,
+            customer=customer,
+            success_url=success_url,
+            error_url=error_url,
+            back_url=back_url,
+        )
         path = f"{_PATH_CAPTURE}/{transaction_id}"
-        response = self._request("POST", path, json={})
+        response = self._request("POST", path, json=body)
         data = response.json()
         return PaymentResult(
             transaction_id=transaction_id,
+            amount=amount,
             status=PaymentStatus.PAID if _is_success(data) else PaymentStatus.ERROR,
             method="credit_card",
             raw_response=data,
         )
 
-    async def capture_async(self, transaction_id: str) -> PaymentResult:
+    async def capture_async(
+        self,
+        transaction_id: str,
+        amount: Decimal,
+        *,
+        order_id: str | None = None,
+        currency: str = "EUR",
+        success_url: str | None = None,
+        error_url: str | None = None,
+        back_url: str | None = None,
+        customer: Customer | None = None,
+    ) -> PaymentResult:
+        body = _build_payment_body(
+            order_id or transaction_id,
+            amount,
+            currency=currency,
+            customer=customer,
+            success_url=success_url,
+            error_url=error_url,
+            back_url=back_url,
+        )
         path = f"{_PATH_CAPTURE}/{transaction_id}"
-        response = await self._request_async("POST", path, json={})
+        response = await self._request_async("POST", path, json=body)
         data = response.json()
         return PaymentResult(
             transaction_id=transaction_id,
+            amount=amount,
             status=PaymentStatus.PAID if _is_success(data) else PaymentStatus.ERROR,
             method="credit_card",
             raw_response=data,
@@ -255,8 +347,14 @@ class CreditCardService(BaseService):
         error_url: str | None = None,
         back_url: str | None = None,
         callback_url: str | None = None,
+        start_date: date | None = None,
+        periodicity: str = "Mensal",
+        collection_day: int = 1,
+        limit_date: date | None = None,
+        auto_process: bool = False,
+        language: str = "PT",
     ) -> PaymentResult:
-        body = _build_payment_body(
+        body = _build_subscription_body(
             order_id,
             amount,
             currency=currency,
@@ -265,6 +363,12 @@ class CreditCardService(BaseService):
             error_url=error_url,
             back_url=back_url,
             callback_url=callback_url,
+            start_date=start_date,
+            periodicity=periodicity,
+            collection_day=collection_day,
+            limit_date=limit_date,
+            auto_process=auto_process,
+            language=language,
         )
         response = self._request("POST", _PATH_SUBSCRIPTION, json=body)
         return _parse_response(response.json(), order_id, amount)
@@ -280,6 +384,44 @@ class CreditCardService(BaseService):
         error_url: str | None = None,
         back_url: str | None = None,
         callback_url: str | None = None,
+        start_date: date | None = None,
+        periodicity: str = "Mensal",
+        collection_day: int = 1,
+        limit_date: date | None = None,
+        auto_process: bool = False,
+        language: str = "PT",
+    ) -> PaymentResult:
+        body = _build_subscription_body(
+            order_id,
+            amount,
+            currency=currency,
+            customer=customer,
+            success_url=success_url,
+            error_url=error_url,
+            back_url=back_url,
+            callback_url=callback_url,
+            start_date=start_date,
+            periodicity=periodicity,
+            collection_day=collection_day,
+            limit_date=limit_date,
+            auto_process=auto_process,
+            language=language,
+        )
+        response = await self._request_async("POST", _PATH_SUBSCRIPTION, json=body)
+        return _parse_response(response.json(), order_id, amount)
+
+    def charge_subscription(
+        self,
+        recurrent_id: str,
+        order_id: str,
+        amount: Decimal,
+        *,
+        currency: str = "EUR",
+        customer: Customer | None = None,
+        success_url: str | None = None,
+        error_url: str | None = None,
+        back_url: str | None = None,
+        days_to_capture: int | None = None,
     ) -> PaymentResult:
         body = _build_payment_body(
             order_id,
@@ -289,35 +431,37 @@ class CreditCardService(BaseService):
             success_url=success_url,
             error_url=error_url,
             back_url=back_url,
-            callback_url=callback_url,
         )
-        response = await self._request_async("POST", _PATH_SUBSCRIPTION, json=body)
-        return _parse_response(response.json(), order_id, amount)
-
-    def charge_subscription(
-        self,
-        recurrent_id: int,
-        order_id: str,
-        amount: Decimal,
-        *,
-        currency: str = "EUR",
-        customer: Customer | None = None,
-    ) -> PaymentResult:
-        body = _build_payment_body(order_id, amount, currency=currency, customer=customer)
+        if days_to_capture is not None:
+            body["payment"]["daysToCapture"] = days_to_capture
         path = f"{_PATH_SUBSCRIPTION_PAYMENT}/{recurrent_id}"
         response = self._request("POST", path, json=body)
         return _parse_response(response.json(), order_id, amount)
 
     async def charge_subscription_async(
         self,
-        recurrent_id: int,
+        recurrent_id: str,
         order_id: str,
         amount: Decimal,
         *,
         currency: str = "EUR",
         customer: Customer | None = None,
+        success_url: str | None = None,
+        error_url: str | None = None,
+        back_url: str | None = None,
+        days_to_capture: int | None = None,
     ) -> PaymentResult:
-        body = _build_payment_body(order_id, amount, currency=currency, customer=customer)
+        body = _build_payment_body(
+            order_id,
+            amount,
+            currency=currency,
+            customer=customer,
+            success_url=success_url,
+            error_url=error_url,
+            back_url=back_url,
+        )
+        if days_to_capture is not None:
+            body["payment"]["daysToCapture"] = days_to_capture
         path = f"{_PATH_SUBSCRIPTION_PAYMENT}/{recurrent_id}"
         response = await self._request_async("POST", path, json=body)
         return _parse_response(response.json(), order_id, amount)

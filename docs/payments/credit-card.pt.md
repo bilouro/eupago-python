@@ -63,26 +63,56 @@ auth = client.credit_card.authorize(
     success_url="...", error_url="...", back_url="...",
 )
 
-# Mais tarde, quando o serviço for prestado:
-captured = client.credit_card.capture(transaction_id=auth.transaction_id)
+# Mais tarde, quando o serviço for prestado — capture exige amount e as
+# mesmas URLs (eupago rejeita corpo vazio com AMOUNT_MISSING).
+captured = client.credit_card.capture(
+    transaction_id=auth.transaction_id,
+    amount=Decimal("100.00"),
+    success_url="...", error_url="...", back_url="...",
+)
 ```
+
+!!! warning "Capacidade do canal"
+    `authorize` + `capture` exigem que o canal eupago tenha **Cartão de
+    Crédito — Auth & Capture** provisionado (uma feature separada do
+    Cartão de Crédito básico). Num canal demo o formulário redirecciona
+    para o `errorUrl` e o capture devolve `PAYMENT_NOT_CAPTIVE`. Pede ao
+    suporte da eupago para activar a feature no teu canal.
 
 ## Exemplo — subscrição
 
 ```python
 sub = client.credit_card.create_subscription(
     order_id="SUB-2026-001",
-    amount=Decimal("0.00"),  # 0 = só registo do cartão
+    amount=Decimal("19.90"),         # valor recorrente
     success_url="...", error_url="...", back_url="...",
+    # Opcionais — defaults equivalem a mensalmente, dia 1, 1 ano:
+    # periodicity="Mensal",
+    # collection_day=1,
+    # auto_process=False,            # True = eupago cobra automaticamente
+    # start_date=date(2026, 6, 1),
+    # limit_date=date(2027, 6, 1),
 )
 
-# Após o webhook entregar um recurrent_id:
+# sub.transaction_id é o subscriptionID (hex de 32 chars) — guarda-o.
+subscription_id = sub.transaction_id
+
+# Cobra depois (server-to-server, sem intervenção do cliente):
 client.credit_card.charge_subscription(
-    recurrent_id=12345,
+    recurrent_id=subscription_id,
     order_id="SUB-2026-001-M01",
     amount=Decimal("19.90"),
+    success_url="...", error_url="...", back_url="...",
 )
 ```
+
+!!! warning "Capacidade do canal"
+    Endpoints de subscrição exigem que o canal tenha **Cartão de Crédito
+    — Subscrição** provisionado pela eupago. Sem isso, o formulário de
+    registo redirecciona para o `errorUrl` e qualquer
+    `charge_subscription` é recusado. O SDK envia o body correcto
+    (verificado contra a spec readme.io); activa a feature no
+    backoffice ou via suporte.
 
 ## Reembolso
 
