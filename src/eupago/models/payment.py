@@ -20,15 +20,22 @@ class PaymentStatus(str, Enum):
 EUPAGO_STATUS_MAP: dict[str, PaymentStatus] = {
     "Paid": PaymentStatus.PAID,
     "paga": PaymentStatus.PAID,
+    "Reembolsado": PaymentStatus.REFUNDED,
     "Refund": PaymentStatus.REFUNDED,
     "reembolsada": PaymentStatus.REFUNDED,
+    # eupago uses US spelling "Canceled" (single L) in webhooks — confirmed
+    # live for MB WAY rejected-by-customer transactions in 2026.
+    "Canceled": PaymentStatus.CANCELLED,
+    "Cancelled": PaymentStatus.CANCELLED,
     "Cancel": PaymentStatus.CANCELLED,
     "cancelada": PaymentStatus.CANCELLED,
     "Expired": PaymentStatus.EXPIRED,
     "expirada": PaymentStatus.EXPIRED,
     "Error": PaymentStatus.ERROR,
     "erro": PaymentStatus.ERROR,
+    "Pending": PaymentStatus.PENDING,
     "pendente": PaymentStatus.PENDING,
+    "Pendente": PaymentStatus.PENDING,
 }
 
 EUPAGO_METHOD_MAP: dict[str, str] = {

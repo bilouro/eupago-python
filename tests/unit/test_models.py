@@ -16,6 +16,13 @@ def test_normalize_status_string() -> None:
     assert normalize_status("paga") == PaymentStatus.PAID
     assert normalize_status("Expired") == PaymentStatus.EXPIRED
     assert normalize_status("Cancel") == PaymentStatus.CANCELLED
+    # eupago webhooks use "Canceled" (US spelling) for rejected MB WAY —
+    # confirmed live in prod 2026-05-31.
+    assert normalize_status("Canceled") == PaymentStatus.CANCELLED
+    assert normalize_status("Cancelled") == PaymentStatus.CANCELLED
+    assert normalize_status("Pending") == PaymentStatus.PENDING
+    assert normalize_status("Pendente") == PaymentStatus.PENDING
+    assert normalize_status("Reembolsado") == PaymentStatus.REFUNDED
     assert normalize_status("unknown") == PaymentStatus.PENDING
 
 
