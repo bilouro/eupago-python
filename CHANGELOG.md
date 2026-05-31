@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-05-31
+
+### Fixed
+- **Python 3.9 compatibility**: added `eval_type_backport>=0.2` as a conditional dependency for Python <3.10. Without it, Pydantic v2 fails at model instantiation when evaluating `X | None` annotations on 3.9 (`TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'`). v0.5.0 was published without this fix and was effectively unusable on 3.9 despite the classifier claiming support.
+- **CI workflow** (`.github/workflows/test.yml`) — was referenced by the README CI badge since day one but never existed. Now runs `ruff check`, `ruff format --check`, `mypy --strict` and `pytest -m "not integration"` on Python 3.9–3.13.
+- **README** aligned with the sibling `vendus` package: bilingual docs link ("English · Português"), Installation section as a bullet list with the explicit PyPI URL.
+
 ## [0.5.0] - 2026-05-31
 
 First production-validated release. MB WAY, Multibanco, Pay By Link and
