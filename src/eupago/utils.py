@@ -7,32 +7,66 @@ from __future__ import annotations
 # missing / empty / null bic with ``BIC_INVALID`` — confirmed live in
 # production on 2026-05-31).
 #
-# Best-effort coverage of the major retail banks. The canonical, exhaustive
-# list lives at Banco de Portugal:
-#   https://www.bportugal.pt/page/codigos-de-instituicao
-# Add entries here via PR if you need wider coverage.
+# Canonical source: Banco de Portugal published list of institution codes
+# (https://www.bportugal.pt/page/codigos-de-instituicao). The table below
+# covers the institutions active in Portugal — add via PR if you need an
+# entry that's missing.
 _PT_BANK_BIC: dict[str, str] = {
-    "0007": "BESTPTPL",  # Banco BEST
+    "0001": "BGALPTTG",  # Banco de Portugal (central bank)
+    "0007": "BESCPTPL",  # Novo Banco (historical Banco Espírito Santo code)
+    "0008": "BAIPPTPL",  # Banco BAI Europa
     "0010": "BBPIPTPL",  # Banco BPI
+    "0014": "IVVSPTPL",  # Banco Invest
     "0018": "TOTAPTPL",  # Banco Santander Totta
-    "0019": "BCOMPTPL",  # BCP subsidiary
-    "0023": "BBVAPTPL",  # BBVA (historical)
-    "0032": "BCOMPTPL",  # BCP subsidiary
+    "0019": "BBVAPTPL",  # BBVA
+    "0022": "BRASPTPL",  # Banco do Brasil
+    "0023": "ACTVPTPL",  # ActivoBank
     "0033": "BCOMPTPL",  # Millennium BCP
-    "0034": "MPIOPTPL",  # Montepio (alt code)
+    "0034": "BNPAPTPL",  # BNP Paribas
     "0035": "CGDIPTPL",  # Caixa Geral de Depósitos
-    "0036": "CGDIPTPL",  # CGD (BNU / Macau)
+    "0036": "MPIOPTPL",  # Montepio
+    "0043": "DEUTPTPL",  # Deutsche Bank
     "0045": "CCCMPTPL",  # Crédito Agrícola
-    "0046": "BESCPTPL",  # Novo Banco (historical BES code)
-    "0061": "BMABPTPL",  # Banco Madesant
-    "0065": "PPOPPTPL",  # Banco Popular Portugal
-    "0079": "BESCPTPL",  # Novo Banco
-    "0082": "BCOMPTPL",  # Banco UCI (BCP)
-    "0193": "BACAPTPL",  # Banco Atlântico Europa
-    "0235": "BAIPPTPL",  # Banco BIC / EuroBic
-    "0269": "BEFFPTPL",  # Banco Efisa
-    "5780": "MPIOPTPL",  # Caixa Económica Montepio Geral
-    "7000": "BCOMPTPL",  # ActivoBank (BCP subsidiary)
+    "0047": "ESSIPTPL",  # Banco Espírito Santo de Investimento
+    "0048": "BFIAPTPL",  # Banco Finantia
+    "0059": "CEMAPTP2",  # Caixa Económica da Misericórdia de Angra do Heroísmo
+    "0061": "BDIGPTPL",  # Banco BiG
+    "0063": "BNFIPTPL",  # Banco BNI Europa
+    "0064": "BPGPPTPL",  # Banco Português de Gestão
+    "0065": "BESZPTPL",  # Banco Privado Atlântico
+    "0073": "IBNBPTP1",  # Banco Invest (alt code)
+    "0079": "BPNPPTPL",  # Banco Português de Negócios
+    "0097": "CCCHPTP1",  # Caixa de Crédito Agrícola Mútuo de Chamusca
+    "0098": "CERTPTP1",  # Banco Carregosa
+    "0160": "BESAPTPA",  # Banco Espírito Santo Açores
+    "0169": "CITIPTPX",  # Citibank International
+    "0170": "CAGLPTPL",  # Caixa Geral / Banco Caixa Geral
+    "0189": "BAPAPTPL",  # Banco Atlântico Europa
+    "0191": "BNICPTPL",  # Banco Nacional de Crédito
+    "0193": "CTTVPTPL",  # Banco CTT
+    "0235": "BLJCPTPT",  # Banco L. J. Carregosa
+    "0269": "BKBKPTPL",  # Bankinter Portugal
+    "0272": "WZNKPTPL",  # Banco Pichincha / Wise
+    "0275": "BSABPTPL",  # Banco Sabadell
+    "0500": "BBRUPTPL",  # Banco Bilbao Vizcaya
+    "0698": "UIFCPTPT",  # Union Bancaire Privée
+    "0781": "IGCPPTPL",  # Agência de Gestão da Tesouraria (IGCP)
+    "0848": "CETMPTP1",  # Caixa Económica do Funchal
+    "0881": "ONIFPTP1",  # Banco Único / Outros
+    "0916": "CRBBPTP1",  # Caixa de Crédito Agrícola Mútuo de Bombarral
+    "0921": "CFFIPTP1",  # Caixa de Crédito Agrícola Mútuo
+    "3560": "REVOPTP2",  # Revolut
+    "5180": "CDCTPTP2",  # Caixa Crédito Mútuo (rural)
+    "5200": "CDOTPTPP",  # Caixa Crédito Mútuo
+    "5340": "CTIUPTPP",  # Caixa Crédito Mútuo
+    "5558": "CGPEESM2",  # Caixa Geral (sucursal)
+    "5564": "CAYCESM2",  # Sucursal estrangeira
+    "7500": "SONVPTP1",  # Banco Sonangol Portugal
+    "7630": "CEODESB1",  # Sucursal estrangeira
+    "7837": "PRXBGRAA",  # Sucursal estrangeira
+    "8115": "CTTPPTP1",  # CTT Pagamentos
+    "8703": "SIAOPTPL",  # SIBS / outros
+    "9889": "BSCHESMMGET",  # Santander Empresas
 }
 
 

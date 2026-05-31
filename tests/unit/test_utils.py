@@ -17,11 +17,15 @@ from eupago.utils import bic_for_pt_iban
         # Other major PT banks
         ("PT50001000001234567890154", "BBPIPTPL"),  # BPI
         ("PT50001800001234567890154", "TOTAPTPL"),  # Santander Totta
+        ("PT50002300001234567890154", "ACTVPTPL"),  # ActivoBank
+        ("PT50003400001234567890154", "BNPAPTPL"),  # BNP Paribas
         ("PT50003500001234567890154", "CGDIPTPL"),  # CGD
+        ("PT50003600001234567890154", "MPIOPTPL"),  # Montepio
         ("PT50004500001234567890154", "CCCMPTPL"),  # Crédito Agrícola
-        ("PT50007900001234567890154", "BESCPTPL"),  # Novo Banco
-        ("PT50578000001234567890154", "MPIOPTPL"),  # Montepio
-        ("PT50700000001234567890154", "BCOMPTPL"),  # ActivoBank (BCP)
+        ("PT50019300001234567890154", "CTTVPTPL"),  # Banco CTT
+        ("PT50026900001234567890154", "BKBKPTPL"),  # Bankinter
+        ("PT50356000001234567890154", "REVOPTP2"),  # Revolut
+        ("PT50016900001234567890154", "CITIPTPX"),  # Citibank
     ],
 )
 def test_bic_for_pt_iban_known_banks(iban: str, expected: str) -> None:
