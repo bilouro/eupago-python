@@ -91,22 +91,30 @@ assert result.status == PaymentStatus.REFUNDED
 refund_id = result.raw_response["refundId"]  # eupago refund id (for audit)
 ```
 
-## Multibanco refunds need an IBAN
+## Multibanco refunds need IBAN **and** BIC
 
 Multibanco settles bank-to-bank, so the refund needs to know where to send
-the money back:
+the money back. **Both `iban` and `bic` are required** despite the docs
+suggesting `bic` is optional — without it eupago returns
+`BIC_INVALID` (live-verified in production, 2026-05-31):
 
 ```python
 client.refunds.refund(
     transaction_id="113068862",
     amount=Decimal("40.00"),
     iban="PT50000201231234567890154",   # customer IBAN
-    # bic="BACTPTPT",                   # usually not needed
+    bic="BCOMPTPL",                      # required (lookup from the IBAN's bank code)
 )
 ```
 
-MB WAY and Credit Card refunds settle wallet-/card-to-card respectively
-and don't need IBAN/BIC.
+Settlement is **asynchronous**: the synchronous response carries
+`status: "Pendente"` (instead of the immediate `"Reembolsado"` you get on
+MB WAY/Card refunds). The settlement webhook arrives later when the bank
+transfer actually clears — could be minutes, could be hours. Use
+`WebhookEvent.original_transaction_id` to reconcile.
+
+MB WAY and Credit Card refunds settle wallet-/card-to-card and don't need
+IBAN/BIC.
 
 ## Partial refund
 

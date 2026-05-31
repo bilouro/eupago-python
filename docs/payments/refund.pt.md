@@ -90,21 +90,29 @@ assert result.status == PaymentStatus.REFUNDED
 refund_id = result.raw_response["refundId"]  # ID do reembolso (audit)
 ```
 
-## Multibanco exige IBAN
+## Multibanco exige IBAN **e** BIC
 
 Multibanco liquida banco-a-banco, logo o reembolso precisa de saber para
-que conta devolver o dinheiro:
+que conta devolver o dinheiro. **`iban` e `bic` são ambos obrigatórios**
+apesar de a documentação sugerir que `bic` é opcional — sem ele a eupago
+devolve `BIC_INVALID` (verificado live em produção, 2026-05-31):
 
 ```python
 client.refunds.refund(
     transaction_id="113068862",
     amount=Decimal("40.00"),
     iban="PT50000201231234567890154",   # IBAN do cliente
-    # bic="BACTPTPT",                   # normalmente desnecessário
+    bic="BCOMPTPL",                      # obrigatório (lookup pelo bank code do IBAN)
 )
 ```
 
-MB WAY e Cartão liquidam wallet-/cartão-a-cartão e não precisam de IBAN.
+A liquidação é **assíncrona**: a resposta síncrona vem com
+`status: "Pendente"` (em vez do `"Reembolsado"` imediato de refunds
+MB WAY/Cartão). O webhook de liquidação chega depois, quando a
+transferência bancária efectivamente clarear — pode ser minutos, podem
+ser horas. Usa `WebhookEvent.original_transaction_id` para reconciliar.
+
+MB WAY e Cartão liquidam wallet-/cartão-a-cartão e não precisam de IBAN/BIC.
 
 ## Reembolso parcial
 

@@ -43,14 +43,19 @@ else:
     print(f"Falhou: {result.raw_response}")
 
 
-# --- Reembolso de Multibanco (precisa IBAN do cliente) ---
+# --- Reembolso de Multibanco (precisa IBAN E BIC do cliente) ---
+#
+# Apesar de a docs eupago dizer que bic é opcional, em produção
+# devolve BIC_INVALID sem ele. Sempre passar ambos.
+# A liquidação é assíncrona — a resposta vem "Pendente" e o webhook
+# de settlement chega depois (minutos a horas).
 
 multibanco_refund = client.refunds.refund(
     transaction_id="113068862",
     amount=Decimal("40.00"),
     reason="Devolução produto",
     iban="PT50000201231234567890154",  # IBAN do cliente
-    # bic="BACTPTPT",                  # opcional, normalmente desnecessário
+    bic="BCOMPTPL",                    # obrigatório (Millennium BCP no exemplo)
 )
 
 
