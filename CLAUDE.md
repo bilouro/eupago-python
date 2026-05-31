@@ -133,6 +133,11 @@ eupago uses three auth methods depending on the endpoint:
 | Legacy (`/clientes/rest_api/...`) | `chave` in request body | Service sets `auth="body"` in `_request()` |
 | Management (`/api/management/v1.02/...`) | `Bearer <token>` header | Service sets `auth="oauth"` in `_request()` |
 
+Management Bearer can come from two sources, both wired into the same `auth="oauth"` slot via `eupago._auth`:
+
+- **`OAuthAuth`** (`EupagoClient(client_id=…, client_secret=…)`) — production path; SDK calls `/api/auth/token` with `grant_type=client_credentials`, caches the token, refreshes on expiry.
+- **`StaticBearerAuth`** (`EupagoClient(management_bearer="…")`) — test escape hatch; caller injects a Bearer they obtained elsewhere (e.g. the backoffice login flow). Bypasses the token fetch. Documented as test-mode in the README.
+
 Each service declares its default auth type. Individual methods can override it. The user never thinks about auth — it's transparent.
 
 ### R5: Every Method Has a Sync + Async Variant
@@ -215,6 +220,43 @@ For each new feature, check:
 2. What does the developer journey look like? (setup → first call → webhook → done)
 3. Which parameters are "configure once" vs "pass every time"?
 
+### R12: Testing Discipline — Live-Validate, Then Guard With Unit
+
+This is the discipline that found four real wire-shape bugs (MB WAY `countryCode`, MB WAY capture body, Credit Card capture body, Refund body) that unit-only testing had missed.
+
+**Two layers, both required:**
+
+| Layer | Where | Runs on | Job |
+|---|---|---|---|
+| Unit (`respx` mocks httpx) | `tests/unit/test_<service>.py` | Every commit / CI | Assert the **exact wire body** + behaviour. Coverage gate ≥85%. |
+| Live (real sandbox + AWS receiver) | `tests/integration/test_<service>_live.py` | Manually, env-var-gated | Prove the SDK actually works end-to-end against the real upstream. |
+
+**Unit tests must assert the wire body, not just the return value.** This is non-negotiable. Three of the four bugs above slipped past tests that only asserted `result.transaction_id == "..."`. Pattern:
+
+```python
+body = json.loads(route.calls[0].request.content)
+assert body == {"payment": {"value": 49.90, "currency": "EUR"}}
+```
+
+**Live tests use `@pytest.mark.integration`**, skip automatically when env vars are missing, and follow the *skip-with-reason* rule: when the upstream channel doesn't have a feature provisioned, skip with a clear reason — never let a test pass silently when it didn't really validate:
+
+```python
+try:
+    return client.foo.bar(...)
+except ApiError as e:
+    if e.error_code == "BAD_REQUEST":
+        pytest.skip(
+            "Channel does not have <feature> enabled (eupago returned BAD_REQUEST). "
+            "The SDK body shape was sent but the endpoint refuses the channel — "
+            "re-run on a channel with <feature> provisioned."
+        )
+    raise
+```
+
+**Honesty rule for the README/CHANGELOG/roadmap.** Use the **per-operation status matrix** (Unit / Live columns). Never claim "service.* live-validated" when only `create_payment` was. Three operations skipping with documented reasons is honest and fine; calling them all "Done" is the trap.
+
+**Live-validate as discovery.** When live testing reveals an SDK bug: fix the SDK → add a unit test that asserts the corrected wire body → the live test passes. That's how the SDK becomes by-the-book against the real API rather than against the docs.
+
 ---
 
 ## How to Add a New Payment Method
@@ -282,12 +324,21 @@ def new_method(self) -> NewMethodService:
 
 Only if the service exposes new public models. Services themselves are accessed via `client.method_name`, not imported directly.
 
-### 5. Add tests
+### 5. Add tests (R12 — read it first)
 
-- Create `tests/unit/test_{method_name}.py`
-- Add JSON fixtures in `tests/fixtures/`
-- Mock with `respx` — never call the real API in unit tests
-- Test: success path, validation errors, API error handling, async variant
+Two test files per service:
+
+**Unit** — `tests/unit/test_{method_name}.py`:
+- Mock with `respx`; never call the real API.
+- **Assert the exact request body** sent on the wire (`json.loads(route.calls[0].request.content)`), not just the return value.
+- Cover: success path, validation errors, API error handling, async variant.
+- Add JSON fixtures in `tests/fixtures/` when responses are large.
+
+**Live** — `tests/integration/test_{method_name}_live.py`:
+- Mark with `@pytest.mark.integration` (deselected by default).
+- Skip via `pytest.mark.skipif` when required env vars (`EUPAGO_API_KEY`, `EUPAGO_WEBHOOK_TABLE`, `EUPAGO_WEBHOOK_SECRET`, etc.) are missing.
+- Use the `BackofficeSession` helper (`tests/integration/sandbox_backoffice.py`) to mark-paid; assert the captured webhook from the AWS receiver (DynamoDB).
+- For features the demo channel doesn't have provisioned, use `pytest.skip(...)` with a clear reason rather than failing the suite.
 
 ### 6. Update `services/__init__.py`
 
@@ -371,6 +422,15 @@ The HMAC key is the channel's "Chave Criptográfica" used as **UTF-8 bytes**.
 | Paysafecard | `POST /clientes/rest_api/paysafecard/create` | body |
 | Refund | `POST /api/management/v1.02/refund/{trid}` | oauth |
 | Transactions | `GET /api/management/v1.02/transactions` | oauth |
+| Subscriptions list | `GET /api/management/v1.02/subscriptions` | oauth |
+| Subscription detail | `GET /api/management/v1.02/subscriptions/{subscriptionId}` | oauth |
+| Subscription edit | `PUT /api/management/v1.02/creditcard/edit/{subscriptionId}` | oauth (**form-urlencoded body**) |
+| Subscription revoke | `POST /api/management/v1.02/subscriptions/revoke/{subscriptionId}` | oauth |
+| Pay By Link detail | `GET /api/management/v1.02/paybylink/details/{paybylinkId}` | oauth |
+
+**Important on identifiers**: subscription endpoints use the **integer `subscriptionId`** (e.g. `4756`, visible in the backoffice URL when editing a subscription), NOT the hex `eupagoToken` (`c20e18387478…`) that `create_subscription` returns and `charge_subscription` accepts. The two are different identifiers for the same resource.
+
+**Important on body shapes**: `PUT /creditcard/edit/{id}` expects `application/x-www-form-urlencoded`, not JSON. The `BaseService._request` / `HttpTransport.request` both accept a `data=` kwarg that overrides the default `Content-Type` for this case.
 
 ---
 
