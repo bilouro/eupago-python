@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`WebhookEvent.original_transaction_id`** — populated on refund webhooks (`method="refund"`) with the trid of the original payment being refunded. Lets callers correlate the refund back to the original payment without keeping their own mapping. eupago sends this as `originalTrid` in the webhook payload.
 
 ### Docs
+- **Pay By Link behaviour learned from prod smoke tests (2026-05-31):**
+  - When the customer completes a Pay By Link payment, the webhook fires as the **chosen method's** webhook (e.g. `method="mbway"`), not a generic "paybylink" event. Your handler doesn't need Pay By Link special-casing — treat the webhook like any direct payment of that method.
+  - When a Pay By Link expires unpaid (`expires_at` passes with no payment started), **no webhook fires**. This is different from MB WAY's direct push (which does fire an `"Expired"` webhook). Track expiry from your own clock.
 - **Multibanco refund actually requires `bic` even though docs say optional** — `client.refunds.refund(...)` without `bic` returns `BIC_INVALID` on Multibanco transactions in production. Updated `docs/payments/refund.md` and `examples/12_refund.py` to make `bic` mandatory in Multibanco refund examples (with `BCOMPTPL` for Millennium BCP as the canonical example). Also documented that Multibanco refunds settle asynchronously — the sync response is `"Pendente"`, the settlement webhook arrives later (sometimes hours).
 
 ### Fixed

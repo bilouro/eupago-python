@@ -99,6 +99,37 @@ client.refunds.refund(
 )
 ```
 
+## Webhooks: baseados no método escolhido, não em "paybylink"
+
+Verificado live em produção a 2026-05-31: quando o cliente completa o
+pagamento, o webhook que dispara é o **do método escolhido** — não um
+evento genérico "paybylink". Se escolher MB WAY recebes um webhook com
+`event.method == "mbway"`; se escolher Multibanco recebes
+`event.method == "multibanco"`. O link de volta é o `event.order_id` que
+definiste em `create_payment(order_id=...)`.
+
+Isto significa que o teu webhook handler **não precisa de tratamento
+especial para Pay By Link** — trata cada webhook como tratarias um
+pagamento directo desse método.
+
+## Expiração é silenciosa (não dispara webhook)
+
+Também verificado em produção: quando o `expires_at` passa **sem o
+cliente iniciar qualquer pagamento**, a eupago **não** dispara webhook.
+Nada chega a avisar que o link expirou. Diferente do push directo MB WAY,
+que dispara webhook `"Expired"` quando os 5 minutos esgotam.
+
+Consequências práticas:
+
+- Se precisas marcar a encomenda como abandonada, controla isso pelo
+  teu relógio — guarda `expires_at` e trata qualquer link passado como
+  morto.
+- O endpoint de management
+  `GET /api/management/v1.02/paybylink/details/{id}` existe mas exige o
+  ID inteiro do Pay By Link (visível no URL do backoffice); o ID hex
+  que `create_payment` devolve é um identificador diferente — mesma
+  quirk que [subscrições de cartão](credit-card.md#gestao-de-subscricoes-management-api).
+
 ## Async
 
 ```python

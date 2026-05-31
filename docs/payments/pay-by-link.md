@@ -99,6 +99,37 @@ client.refunds.refund(
 )
 ```
 
+## Webhooks: based on the chosen method, not "paybylink"
+
+Live-verified in production on 2026-05-31: when the customer completes
+the payment, the webhook that fires is the **chosen method's** webhook —
+not a generic "paybylink" event. If they pick MB WAY you get a webhook
+with `event.method == "mbway"`; if they pick Multibanco you get
+`event.method == "multibanco"`. The link back is the `event.order_id`
+you set on `create_payment(order_id=...)`.
+
+This means your existing webhook handler does not need any Pay By Link
+special-case — treat each webhook as you'd treat a direct payment of
+that method.
+
+## Expiry is silent (no webhook fires)
+
+Also verified in production: when the `expires_at` you set passes
+**without the customer starting any payment**, eupago does **not** fire
+a webhook. Nothing arrives to tell you the link has expired. This is
+different from MB WAY's direct push, which does fire an `"Expired"`
+webhook when the 5-minute approval window times out.
+
+Practical consequences:
+
+- If you need to mark the order as abandoned, drive that off your own
+  clock — store `expires_at` and treat any link past that time as dead.
+- The eupago management endpoint
+  `GET /api/management/v1.02/paybylink/details/{id}` exists but requires
+  the integer Pay By Link ID (visible in the backoffice URL); the hex
+  ID that `create_payment` returns is not the same identifier — same
+  quirk as [Credit Card subscriptions](credit-card.md#subscription-management-management-api).
+
 ## Async
 
 ```python
