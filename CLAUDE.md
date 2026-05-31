@@ -441,11 +441,52 @@ The HMAC key is the channel's "Chave Criptográfica" used as **UTF-8 bytes**.
 | **v0.1.0** | MB WAY + webhooks + core | **Done** |
 | **v0.2.0** | Multibanco | **Done** |
 | **v0.3.0** | Credit Card + Apple/Google Pay | **Done** |
-| **v0.4.0** | Refunds (OAuth) + Pay By Link | **Done** (refund live-verification pending OAuth creds from eupago support) |
-| v0.5.0 | Direct Debit, Payshop, Cofidis, Floa, PIX, Pagaqui, Paysafecard | — |
-| v0.6.0 | Webhook docs/recipes only — `parse_webhook` stays the public API; **no framework adapters** (keeps the SDK framework-agnostic, like Stripe/Mollie) | — |
-| v0.7.0 | CLI tool + dry-run mode | — |
+| **v0.4.0** | Refunds (OAuth) + Pay By Link | **Done** |
+| **v0.5.0** | Subscription management + production validation (MB WAY, Multibanco, Pay By Link, Refunds verified live) + several wire-shape bug fixes discovered in prod | **Done** |
+| v0.6.0 | Direct Debit, Payshop, Cofidis, Floa, PIX, Pagaqui, Paysafecard | — |
+| v0.7.0 | Webhook docs/recipes only — `parse_webhook` stays the public API; **no framework adapters** (keeps the SDK framework-agnostic, like Stripe/Mollie) | — |
+| v0.8.0 | CLI tool + dry-run mode | — |
 | v1.0.0 | Stable API, full docs | — |
+
+---
+
+## Releasing to PyPI
+
+Published via **Trusted Publishing (OIDC)** — no tokens stored anywhere.
+GitHub Actions (`.github/workflows/release.yml`) does the build + publish
+when a GitHub Release is created.
+
+### One-time setup (already done)
+
+1. PyPI pending publisher at <https://pypi.org/manage/account/publishing/>:
+   - Project name: `eupago` · Owner: `bilouro` · Repo: `eupago-python`
+   - Workflow: `release.yml` · Environment: `pypi`
+2. (Optional) GitHub environment: `gh api --method PUT repos/bilouro/eupago-python/environments/pypi`
+
+### Cutting a release
+
+1. **All gates green on `main`:** `ruff check .`, `ruff format --check .`,
+   `mypy src/`, `pytest`, `mkdocs build --strict`. Push.
+2. **Bump version** in `pyproject.toml` AND `src/eupago/__init__.py`
+   (semver — stay `0.x` while the API may still break; `1.0.0` only when
+   you commit to stability).
+3. **Promote `[Unreleased]` in CHANGELOG.md** to `## [X.Y.Z] - YYYY-MM-DD`.
+4. **Commit + push** the version bump.
+5. **Cut the GitHub Release** (this triggers `release.yml`):
+   ```bash
+   gh release create vX.Y.Z --target main --title vX.Y.Z \
+       --notes-from-tag   # or --notes "release notes here"
+   ```
+6. **Verify:** `pip install eupago==X.Y.Z`.
+
+### Rules
+
+- **Never commit a token.** Trusted Publishing avoids them entirely.
+- A published version is **immutable** — you cannot re-upload `X.Y.Z`;
+  fix mistakes with a new version.
+- Test on TestPyPI first only when significantly changing the build
+  (new extras, hatchling config, etc.). For normal releases, the
+  GitHub Actions build + `twine check` is sufficient pre-flight.
 
 ---
 

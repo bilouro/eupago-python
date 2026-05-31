@@ -17,32 +17,36 @@ MB WAY, Multibanco, and more — in 5 lines of Python.
 
 ## Status
 
-Per-operation live coverage against the eupago sandbox. *Live-validated*
-means an integration test creates the payment, drives it to Paid, and
-asserts the captured webhook matches; *Live SDK call only* means the
-endpoint was actually called against the sandbox but the full paid flow
-needs a feature the demo channel doesn't have provisioned.
+Per-operation coverage. **Unit** = `respx`-mocked unit test asserting the wire body.
+**Sandbox** = integration test against the eupago sandbox.
+**Prod** = real production transaction exercised against a live eupago channel
+on 2026-05-31 (real money moved + verified back via webhook).
 
-| Operation | Unit | Live |
-|---|:-:|---|
-| `mbway.create_payment` (sync + async) | ✅ | ✅ Backoffice mark-paid → webhook PAID |
-| `mbway.authorize` (sync + async) | ✅ | ⚠️ Endpoint requires *Auth & Capture* channel feature; live test skips on demo channel |
-| `mbway.capture` (sync + async) | ✅ | ⚠️ Same — gated by *Auth & Capture* |
-| `multibanco.create_reference` (sync + async) | ✅ | ✅ Backoffice mark-paid → webhook PAID (encrypted) |
-| `multibanco.get_info` (sync + async) | ✅ | ✅ Read back PAID after webhook |
-| `credit_card.create_payment` (sync + async) | ✅ | ✅ Playwright drives Shift4 form + Credorax ACS challenge (`4018810000150015`, OTP `0101`) → webhook PAID |
-| `credit_card.authorize` (sync + async) | ✅ | ⚠️ Endpoint returns 201 + redirectUrl, but form posts to errorUrl on demo channel (*Auth & Capture* not provisioned); test skips |
-| `credit_card.capture` (sync + async) | ✅ | ⚠️ Returns `PAYMENT_NOT_CAPTIVE` on demo channel; test skips |
-| `credit_card.create_subscription` (sync + async) | ✅ | ✅ Endpoint returns 201 + `subscriptionID`; the registered sub shows up in `list_subscriptions()`. Full card-registration form drive still blocked by channel `Subscription` feature gap |
-| `credit_card.charge_subscription` (sync + async) | ✅ | ⚠️ Needs a sub past `Pendente` (channel gap above) |
-| `credit_card.list_subscriptions` / `get_subscription` / `edit_subscription` / `revoke_subscription` (sync + async, Management API) | ✅ | ✅ list/get/edit live-validated; revoke validated only on the error path (needs an active sub) |
-| `apple_pay.create_payment` (sync + async) | ✅ | ❌ Requires a real Apple Wallet token from a device |
-| `google_pay.create_payment` (sync + async) | ✅ | ❌ Requires a real Google Pay token from a device |
-| `pay_by_link.create_payment` (sync + async) | ✅ | ✅ Real `paybylink/form/...` URL generated; full customer-completes flow needs at least one method enabled on the channel |
-| `refunds.refund` (sync + async, OAuth) | ✅ | ✅ Live-validated: paid MB WAY → `client.refunds.refund(...)` returns `REFUNDED` + `refundId`. Uses `management_bearer` (backoffice login token) in the test until eupago issues OAuth `client_id`/`client_secret`. Multibanco refunds also require `iban`/`bic`. No webhook fires on refund — verify via the response. |
-| Webhooks v2.0 (POST + HMAC, cleartext **and** AES-256-CBC encrypted) | ✅ | ✅ |
-| Webhooks v1.0 (legacy GET) | ✅ | — |
-| HTTP transport, retries, audit hook, PII redaction | ✅ | — |
+| Operation | Unit | Sandbox | Prod |
+|---|:-:|:-:|:-:|
+| `mbway.create_payment` (sync + async) | ✅ | ✅ | ✅ €1 paid & webhook verified |
+| `mbway.authorize` / `capture` (sync + async) | ✅ | ⚠️ skip — channel needs *Auth & Capture* feature | — |
+| `multibanco.create_reference` (sync + async) | ✅ | ✅ | ✅ €1 paid via homebanking & webhook verified |
+| `multibanco.get_info` (sync + async) | ✅ | ✅ | — |
+| `credit_card.create_payment` (sync + async, 3DS) | ✅ | ✅ Playwright drives Shift4 + Credorax (`4018810000150015`, OTP `0101`) | — |
+| `credit_card.authorize` / `capture` (sync + async) | ✅ | ⚠️ skip — channel needs *Auth & Capture* | — |
+| `credit_card.create_subscription` / `charge_subscription` (sync + async) | ✅ | ⚠️ partial — sub appears in `list_subscriptions()` but card-registration form blocked by *Subscription* channel feature | — |
+| `credit_card.list_subscriptions` / `get_subscription` / `edit_subscription` / `revoke_subscription` (Management API, sync + async) | ✅ | ✅ list/get/edit; revoke only error-path | — |
+| `apple_pay.create_payment` (sync + async) | ✅ | ❌ needs a real Apple Wallet token | — |
+| `google_pay.create_payment` (sync + async) | ✅ | ❌ needs a real Google Pay token | — |
+| `pay_by_link.create_payment` (sync + async) | ✅ | ✅ URL only (sandbox channel has no methods configured) | ✅ link generated, customer paid via MB WAY, webhook arrived as `method="mbway"` (chosen method, not "paybylink") |
+| `refunds.refund` (sync + async) | ✅ | ✅ via backoffice Bearer | ✅ €1 MB WAY refund instant (`Reembolsado`); €2 Multibanco refund accepted & settling async (`Pendente`); **`bic` required** (not optional as docs claim); helper `eupago.utils.bic_for_pt_iban(iban)` covers major PT banks |
+| `refunds.get` (sync + async) — `GET /management/refund/{id}` | ✅ | ✅ | ✅ used to confirm Multibanco refund settlement state |
+| Webhooks v2.0 (POST + HMAC, cleartext **and** AES-256-CBC encrypted) | ✅ | ✅ | ✅ all 5 prod webhook variants captured |
+| Refund webhook (`method="RB:PT"`, links via `original_transaction_id`) | ✅ | — | ✅ contrary to docs claim, eupago **does** fire refund webhooks |
+| Webhooks v1.0 (legacy GET) | ✅ | — | — |
+| HTTP transport (retry, audit hook, PII redaction, form-urlencoded support) | ✅ | — | — |
+
+Discovered in production and now mapped: `"Canceled"` (US 1-L spelling) → `CANCELLED`,
+`"REFUNDED"` (uppercase) → `REFUNDED`, `"RB:PT"` → method `"refund"`. Multibanco
+refunds settle async (`"Pendente"` → `"Reembolsado"` later via webhook). Pay By
+Link expiry is **silent** — no webhook, link becomes a generic 404 page; track
+`expires_at` yourself.
 
 Planned (see [roadmap in CLAUDE.md](CLAUDE.md)): Direct Debit, Payshop, Cofidis,
 Floa, PIX, Pagaqui, Paysafecard.

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-05-31
+
+First production-validated release. MB WAY, Multibanco, Pay By Link and
+Refunds were exercised against a live eupago production channel
+(`Destrezàvolta`) with real money — 5 transactions paid and 3 refunds
+emitted, all webhooks captured and verified through the SDK. Several
+real wire-shape bugs surfaced and were fixed.
+
 ### Added
 - **Subscription management** on `client.credit_card` — four new methods covering the full `/api/management/v1.02/subscriptions` + `/creditcard/edit` surface that the eupago backoffice uses (sync + async):
   - `list_subscriptions()` — returns every subscription on the channel.
