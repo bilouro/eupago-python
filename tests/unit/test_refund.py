@@ -155,6 +155,47 @@ def test_refund_with_management_bearer_bypasses_oauth() -> None:
 
 
 @respx.mock
+def test_refund_get_returns_state(client: EupagoClient) -> None:
+    """``client.refunds.get(refund_id)`` exposes /api/management/v1.02/refund/{id}.
+    Discovered live in production while a Multibanco refund was still in
+    ``Pendente`` state and we needed to confirm it hadn't been reversed.
+    """
+    _mock_oauth_token()
+    respx.get(f"{REFUND_URL}/151498").mock(
+        return_value=Response(
+            200,
+            json={
+                "transactionStatus": "Success",
+                "refundList": {
+                    "identifier": "PROD-MB-cc2ae36e9c",
+                    "reference": "286224346",
+                    "status": "pendente",
+                },
+            },
+        )
+    )
+
+    detail = client.refunds.get(151498)
+    assert detail["identifier"] == "PROD-MB-cc2ae36e9c"
+    assert detail["status"] == "pendente"
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_refund_get_async(client: EupagoClient) -> None:
+    _mock_oauth_token()
+    respx.get(f"{REFUND_URL}/151498").mock(
+        return_value=Response(
+            200,
+            json={"transactionStatus": "Success", "refundList": {"status": "Reembolsado"}},
+        )
+    )
+    detail = await client.refunds.get_async(151498)
+    assert detail["status"] == "Reembolsado"
+    await client.aclose()
+
+
+@respx.mock
 @pytest.mark.asyncio
 async def test_refund_async_success(client: EupagoClient) -> None:
     _mock_oauth_token()

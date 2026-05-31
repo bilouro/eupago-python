@@ -102,3 +102,23 @@ class RefundService(BaseService):
         path = f"{_PATH_REFUND}/{transaction_id}"
         response = await self._request_async("POST", path, json=body)
         return _parse_response(response.json(), transaction_id, amount)
+
+    def get(self, refund_id: str | int) -> dict[str, Any]:
+        """Fetch the current state of a refund (e.g. for Multibanco refunds,
+        which settle asynchronously — the sync response is ``"Pendente"`` and
+        the actual bank-to-bank clearing happens later).
+
+        Returns the ``refundList`` dict from the eupago response, with at
+        least ``identifier``, ``reference`` and ``status``. Verified live in
+        production 2026-05-31.
+        """
+        response = self._request("GET", f"{_PATH_REFUND}/{refund_id}", auth="oauth")
+        data = response.json()
+        refund_list: dict[str, Any] = data.get("refundList", {})
+        return refund_list
+
+    async def get_async(self, refund_id: str | int) -> dict[str, Any]:
+        response = await self._request_async("GET", f"{_PATH_REFUND}/{refund_id}", auth="oauth")
+        data = response.json()
+        refund_list: dict[str, Any] = data.get("refundList", {})
+        return refund_list

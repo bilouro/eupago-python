@@ -95,23 +95,40 @@ refund_id = result.raw_response["refundId"]  # eupago refund id (for audit)
 
 Multibanco settles bank-to-bank, so the refund needs to know where to send
 the money back. **Both `iban` and `bic` are required** despite the docs
-suggesting `bic` is optional — without it eupago returns
-`BIC_INVALID` (live-verified in production, 2026-05-31):
+suggesting `bic` is optional — without it eupago returns `BIC_INVALID`
+(definitively probed in production on 2026-05-31: `bic` missing, `""` and
+`null` all rejected; only a non-empty string is accepted):
 
 ```python
+from eupago.utils import bic_for_pt_iban
+
+customer_iban = "PT50000201231234567890154"
 client.refunds.refund(
     transaction_id="113068862",
     amount=Decimal("40.00"),
-    iban="PT50000201231234567890154",   # customer IBAN
-    bic="BCOMPTPL",                      # required (lookup from the IBAN's bank code)
+    iban=customer_iban,
+    bic=bic_for_pt_iban(customer_iban),  # SDK helper for the top PT banks
 )
 ```
 
-Settlement is **asynchronous**: the synchronous response carries
-`status: "Pendente"` (instead of the immediate `"Reembolsado"` you get on
-MB WAY/Card refunds). The settlement webhook arrives later when the bank
-transfer actually clears — could be minutes, could be hours. Use
+`bic_for_pt_iban` covers the major retail banks in Portugal (~99% of
+consumer accounts). It returns `None` for niche banks — in that case fall
+back to asking the customer.
+
+## Settlement is asynchronous (and you can poll for it)
+
+Multibanco refunds carry `status: "Pendente"` in the synchronous response
+(MB WAY / Card refunds get the immediate `"Reembolsado"`). The settlement
+webhook fires later when the bank transfer clears — minutes to hours. Use
 `WebhookEvent.original_transaction_id` to reconcile.
+
+If you'd rather poll than wait for the webhook:
+
+```python
+state = client.refunds.get(refund_id)
+# {"identifier": "ORD-...", "reference": "...", "status": "pendente"}
+# changes to "Reembolsado" once settled
+```
 
 MB WAY and Credit Card refunds settle wallet-/card-to-card and don't need
 IBAN/BIC.

@@ -95,22 +95,40 @@ refund_id = result.raw_response["refundId"]  # ID do reembolso (audit)
 Multibanco liquida banco-a-banco, logo o reembolso precisa de saber para
 que conta devolver o dinheiro. **`iban` e `bic` são ambos obrigatórios**
 apesar de a documentação sugerir que `bic` é opcional — sem ele a eupago
-devolve `BIC_INVALID` (verificado live em produção, 2026-05-31):
+devolve `BIC_INVALID` (provado definitivamente em produção a 2026-05-31:
+`bic` ausente, `""` e `null` todos rejeitados; só uma string não vazia
+é aceite):
 
 ```python
+from eupago.utils import bic_for_pt_iban
+
+iban_cliente = "PT50000201231234567890154"
 client.refunds.refund(
     transaction_id="113068862",
     amount=Decimal("40.00"),
-    iban="PT50000201231234567890154",   # IBAN do cliente
-    bic="BCOMPTPL",                      # obrigatório (lookup pelo bank code do IBAN)
+    iban=iban_cliente,
+    bic=bic_for_pt_iban(iban_cliente),  # helper do SDK para os principais bancos PT
 )
 ```
 
-A liquidação é **assíncrona**: a resposta síncrona vem com
-`status: "Pendente"` (em vez do `"Reembolsado"` imediato de refunds
-MB WAY/Cartão). O webhook de liquidação chega depois, quando a
-transferência bancária efectivamente clarear — pode ser minutos, podem
-ser horas. Usa `WebhookEvent.original_transaction_id` para reconciliar.
+`bic_for_pt_iban` cobre os principais bancos de retalho em Portugal
+(~99% das contas). Devolve `None` para bancos menores — nesse caso
+pergunta ao cliente.
+
+## Liquidação é assíncrona (e podes consultar)
+
+Refunds Multibanco vêm com `status: "Pendente"` na resposta síncrona
+(MB WAY / Cartão dão o `"Reembolsado"` imediato). O webhook de liquidação
+chega depois — minutos a horas. Usa `WebhookEvent.original_transaction_id`
+para reconciliar.
+
+Se preferires consultar em vez de esperar pelo webhook:
+
+```python
+estado = client.refunds.get(refund_id)
+# {"identifier": "ORD-...", "reference": "...", "status": "pendente"}
+# muda para "Reembolsado" após liquidação
+```
 
 MB WAY e Cartão liquidam wallet-/cartão-a-cartão e não precisam de IBAN/BIC.
 

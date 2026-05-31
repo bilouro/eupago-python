@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New live integration test `tests/integration/test_refund_live.py` that pays an MB WAY transaction, captures the webhook, then calls `client.refunds.refund(...)` end-to-end and asserts `REFUNDED` + a real `refundId` in the response. Uses `management_bearer` from the backoffice helper as the temporary auth path until eupago issues OAuth credentials.
 
 ### Added
+- **`client.refunds.get(refund_id)`** (sync + async) — `GET /api/management/v1.02/refund/{refundId}`. Returns the refund's current state (`identifier`, `reference`, `status`). Particularly useful for Multibanco refunds, which settle asynchronously (`status: "pendente"` until the bank transfer clears, then `"Reembolsado"`).
+- **`eupago.utils.bic_for_pt_iban(iban)`** — helper that maps a Portuguese IBAN's bank code (positions 5–8) to the corresponding BIC. Covers the major retail banks in Portugal (~99% of consumer accounts). Returns `None` for niche banks. Built because Multibanco refunds require a `bic` argument and eupago doesn't expose a lookup API for it.
 - **`WebhookEvent.original_transaction_id`** — populated on refund webhooks (`method="refund"`) with the trid of the original payment being refunded. Lets callers correlate the refund back to the original payment without keeping their own mapping. eupago sends this as `originalTrid` in the webhook payload.
 
 ### Docs
