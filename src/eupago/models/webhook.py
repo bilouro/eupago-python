@@ -9,6 +9,10 @@ from eupago.models.payment import PaymentStatus
 class WebhookEvent(BaseModel):
     order_id: str | None = None
     transaction_id: str | None = None
+    # Set on refund webhooks (method = ``"refund"``): the trid of the original
+    # paid transaction being refunded. Lets you correlate the refund back to
+    # the original payment without keeping your own mapping.
+    original_transaction_id: str | None = None
     reference: str | None = None
     entity: str | None = None
     amount: Decimal | None = None

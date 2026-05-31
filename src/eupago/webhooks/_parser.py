@@ -47,6 +47,11 @@ def parse_v2(body: dict[str, Any]) -> WebhookEvent:
     return WebhookEvent(
         order_id=tx.get("identifier"),
         transaction_id=str(tx["trid"]) if "trid" in tx else None,
+        # Refund webhooks (method="RB:PT") carry the original payment's trid
+        # in ``originalTrid`` — confirmed live in production 2026-05-31.
+        original_transaction_id=(
+            str(tx["originalTrid"]) if tx.get("originalTrid") is not None else None
+        ),
         reference=str(tx["reference"]) if "reference" in tx else None,
         entity=str(tx["entity"]) if "entity" in tx else None,
         amount=_safe_decimal(

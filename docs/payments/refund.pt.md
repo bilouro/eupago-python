@@ -9,18 +9,36 @@ Pay By Link, …).
 Os reembolsos usam a **API de management** do eupago, que tem autenticação
 distinta dos restantes endpoints.
 
-## ⚠️ Sem webhook em reembolsos
+## Webhook de reembolso (a documentação diz "não", na prática "sim")
 
-Ao contrário dos pagamentos, **o eupago NÃO emite webhook para reembolsos**.
-Trata a resposta síncrona como fonte de verdade:
+A documentação da eupago diz que não há webhook em reembolsos. **Em
+produção há** — confirmado live a 2026-05-31:
 
-```python
-if result.status == PaymentStatus.REFUNDED:
-    ...
+```json
+{
+  "transaction": {
+    "method": "RB:PT",                    // reembolso
+    "status": "REFUNDED",                 // maiúsculas aqui, "Reembolsado" na resposta síncrona
+    "trid": "113194712",                  // o transaction_id do próprio refund
+    "originalTrid": "113193247",          // o trid do pagamento que se reembolsou ← reconciliação
+    "identifier": "PROD-MW-74685211ac",
+    "amount": {"value": 1, "currency": "EUR"}
+  }
+}
 ```
 
-Se precisares de uma segunda fonte, consulta o endpoint de transações da
-API de management após o reembolso.
+O SDK parseia correctamente:
+
+```python
+event = client.webhooks.parse(body=request.body, headers=request.headers)
+if event.method == "refund" and event.status == PaymentStatus.REFUNDED:
+    # link para o pagamento original sem precisares de manter o teu mapeamento
+    original_payment_id = event.original_transaction_id
+```
+
+A resposta síncrona (200/201 + ``refundId``) continua a ser a fonte de
+verdade. O webhook é útil para **reconciliação** — sobretudo quando o
+reembolso parte de fora do teu SDK (ex: admin no backoffice).
 
 ## Obter as credenciais OAuth
 

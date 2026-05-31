@@ -62,10 +62,15 @@ class RefundService(BaseService):
     username/password) — both still require the ``client_id`` / ``client_secret``
     pair.
 
-    **No refund webhook:** the eupago docs state explicitly that there are no
-    webhook notifications for refunded transactions. Verify the refund via the
-    response itself (``status == PaymentStatus.REFUNDED``) and, if you need a
-    second source of truth, by polling the management transactions endpoint.
+    **Refund webhooks:** the eupago documentation says no webhook fires for
+    refunds. **In practice it does** (confirmed live in production,
+    2026-05-31): an async webhook arrives with ``method="RB:PT"``,
+    ``status="REFUNDED"``, and an ``originalTrid`` field pointing back at the
+    original payment's transaction_id. The SDK normalizes these via
+    ``client.webhooks.parse(...)`` →
+    ``WebhookEvent(method="refund", status=REFUNDED, original_transaction_id=…)``.
+    The synchronous response is still authoritative (200/201 + ``refundId``),
+    but the webhook is useful for reconciliation back to the original payment.
     """
 
     _default_auth: str = "oauth"

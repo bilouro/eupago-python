@@ -21,6 +21,10 @@ EUPAGO_STATUS_MAP: dict[str, PaymentStatus] = {
     "Paid": PaymentStatus.PAID,
     "paga": PaymentStatus.PAID,
     "Reembolsado": PaymentStatus.REFUNDED,
+    # eupago refund webhooks use uppercase "REFUNDED" (different casing from
+    # the synchronous refund response, which uses "Reembolsado"). Confirmed
+    # live in production on 2026-05-31.
+    "REFUNDED": PaymentStatus.REFUNDED,
     "Refund": PaymentStatus.REFUNDED,
     "reembolsada": PaymentStatus.REFUNDED,
     # eupago uses US spelling "Canceled" (single L) in webhooks — confirmed
@@ -41,6 +45,9 @@ EUPAGO_STATUS_MAP: dict[str, PaymentStatus] = {
 EUPAGO_METHOD_MAP: dict[str, str] = {
     "MW:PT": "mbway",
     "PC:PT": "multibanco",
+    # RB:PT = reembolso. eupago fires a webhook on refunds with this method
+    # code, contrary to what their docs claim. Confirmed live 2026-05-31.
+    "RB:PT": "refund",
     "PS:PT": "payshop",
     "CC:PT": "credit_card",
     "PF:PT": "paysafecard",

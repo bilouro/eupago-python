@@ -46,13 +46,10 @@ from typing import Any
 
 import httpx
 
-_BASE = "https://sandbox.eupago.pt"
-_LOGIN_URL = f"{_BASE}/clientes/auth/connectbo"
-_CORE_LOGIN_URL = f"{_BASE}/api/auth/login"
-_MYUSER_URL = f"{_BASE}/clientes/auth/myuser"
-_SERVICES_URL = f"{_BASE}/clientes/contas/services"
-_LIST_URL = f"{_BASE}/api/intern/v1.02/references"
-_MARK_PAID_URL = f"{_BASE}/clientes/pagamentos/como_paga_demo_por_soap"
+_SANDBOX_BASE = "https://sandbox.eupago.pt"
+_PRODUCTION_BASE = "https://clientes.eupago.pt"
+# Backwards-compat alias used by older call sites.
+_BASE = _SANDBOX_BASE
 
 
 class BackofficeError(RuntimeError):
@@ -60,9 +57,16 @@ class BackofficeError(RuntimeError):
 
 
 class BackofficeSession:
-    def __init__(self, email: str, password: str) -> None:
+    def __init__(
+        self,
+        email: str,
+        password: str,
+        *,
+        production: bool = False,
+    ) -> None:
         self._email = email
         self._password = password
+        self._base = _PRODUCTION_BASE if production else _SANDBOX_BASE
         self._client = httpx.Client(timeout=20, headers={"User-Agent": "Mozilla/5.0"})
         self._jwt: str | None = None
         self._bearer: str | None = None
@@ -77,7 +81,7 @@ class BackofficeSession:
     def login(self) -> None:
         body = json.dumps({"user": self._email, "password": self._password})
         r = self._client.post(
-            _LOGIN_URL,
+            f"{self._base}/clientes/auth/connectbo",
             content=body,
             headers={
                 "Content-Type": "application/x-www-form-urlencoded, application/json",
@@ -88,7 +92,7 @@ class BackofficeSession:
         self._jwt = r.json()["access_token"]
 
         r = self._client.post(
-            _CORE_LOGIN_URL,
+            f"{self._base}/api/auth/login",
             data={"username": self._email, "password": self._password},
             headers={"Accept": "application/json"},
         )
@@ -98,8 +102,12 @@ class BackofficeSession:
         # Bootstrap calls that the browser fires after login — these load the
         # user profile + channel services into the PHP session and are required
         # for the /clientes/pagamentos/ endpoints to accept us.
-        self._client.get(_MYUSER_URL, headers={"Authorization": self._jwt}).raise_for_status()
-        self._client.get(_SERVICES_URL, headers={"Authorization": self._jwt}).raise_for_status()
+        self._client.get(
+            f"{self._base}/clientes/auth/myuser", headers={"Authorization": self._jwt}
+        ).raise_for_status()
+        self._client.get(
+            f"{self._base}/clientes/contas/services", headers={"Authorization": self._jwt}
+        ).raise_for_status()
 
     def _x_auth_token(self) -> str:
         today = dt.date.today().strftime("%Y%m%d")
@@ -136,14 +144,14 @@ class BackofficeSession:
             "search[regex]": "false",
         }
         r = self._client.post(
-            _LIST_URL,
+            f"{self._base}/api/intern/v1.02/references",
             params=params,
             data=data,
             headers={
                 "Authorization": f"Bearer {self._bearer}",
                 "x-auth-token": self._x_auth_token(),
                 "Accept": "application/json",
-                "Origin": _BASE,
+                "Origin": self._base,
             },
         )
         r.raise_for_status()
@@ -167,13 +175,13 @@ class BackofficeSession:
         sha = hashlib.sha1((phpsess + str(ts)).encode()).hexdigest()  # noqa: S324 (vendor scheme)
         mcas = f"sid:{sha},{ts}"
         r = self._client.post(
-            _MARK_PAID_URL,
+            f"{self._base}/clientes/pagamentos/como_paga_demo_por_soap",
             data={"refid": str(refid), "_mcasgrifc": mcas},
             headers={
                 "Authorization": self._jwt or "",
                 "Content-Type": "application/x-www-form-urlencoded, application/json",
                 "Accept": "application/json",
-                "Origin": _BASE,
+                "Origin": self._base,
             },
         )
         r.raise_for_status()

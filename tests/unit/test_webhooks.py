@@ -220,6 +220,39 @@ def test_v2_webhook_minimal_fields() -> None:
     assert event.currency == "EUR"
 
 
+def test_v2_refund_webhook_carries_original_trid() -> None:
+    """eupago DOES fire a webhook on refunds (contrary to their docs).
+    Live-verified shape from production 2026-05-31:
+
+        method="RB:PT", status="REFUNDED", originalTrid=<original payment trid>
+
+    The SDK normalises method to "refund", status to REFUNDED, and exposes the
+    link back to the original payment via WebhookEvent.original_transaction_id.
+    """
+    body = json.dumps(
+        {
+            "channel": {"account": "Destrezàvolta", "name": "Destrezàvolta, Lda"},
+            "transaction": {
+                "reference": "70126512",
+                "identifier": "PROD-MW-74685211ac",
+                "method": "RB:PT",
+                "amount": {"value": 1, "currency": "EUR"},
+                "fees": {"value": 0, "currency": "EUR"},
+                "date": "2026-05-31T18:05:00",
+                "trid": "113194712",
+                "originalTrid": "113193247",
+                "status": "REFUNDED",
+            },
+        }
+    ).encode()
+    event = parse_webhook(body=body)
+    assert event.status == PaymentStatus.REFUNDED
+    assert event.method == "refund"
+    assert event.transaction_id == "113194712"
+    assert event.original_transaction_id == "113193247"
+    assert event.order_id == "PROD-MW-74685211ac"
+
+
 def test_parse_webhook_from_fixture(fixture_data) -> None:
     body = json.dumps(fixture_data("webhook_v2_paid")).encode()
     event = parse_webhook(body=body)

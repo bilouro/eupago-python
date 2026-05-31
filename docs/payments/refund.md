@@ -9,18 +9,37 @@ Pay By Link, …).
 Refunds use eupago's **management API**, which is a separate auth surface
 from the regular payment endpoints.
 
-## ⚠️ No webhook on refunds
+## Refund webhooks (eupago docs say "no", in practice "yes")
 
-Unlike payments, **eupago does not emit a webhook for refunds**. Treat the
-synchronous response as the source of truth:
+The eupago documentation claims no webhook fires on refunds. **In production
+it does** — confirmed live on 2026-05-31:
 
-```python
-if result.status == PaymentStatus.REFUNDED:
-    ...
+```json
+{
+  "transaction": {
+    "method": "RB:PT",                    // reembolso
+    "status": "REFUNDED",                 // uppercase here, "Reembolsado" in the sync response
+    "trid": "113194712",                  // the refund's own transaction_id
+    "originalTrid": "113193247",          // the trid of the payment being refunded ← reconciliation
+    "identifier": "PROD-MW-74685211ac",
+    "amount": {"value": 1, "currency": "EUR"}
+  }
+}
 ```
 
-If you need a second source of truth, poll the management transactions
-endpoint after the refund.
+The SDK parses these correctly:
+
+```python
+event = client.webhooks.parse(body=request.body, headers=request.headers)
+if event.method == "refund" and event.status == PaymentStatus.REFUNDED:
+    # link back to the original payment without keeping your own mapping
+    original_payment_id = event.original_transaction_id
+```
+
+The synchronous response (200/201 + ``refundId``) is still authoritative.
+The webhook is useful for **reconciliation** — particularly when the refund
+comes from outside your SDK call path (e.g. an admin doing it in the
+backoffice).
 
 ## Getting the OAuth credentials
 
