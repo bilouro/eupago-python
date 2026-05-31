@@ -21,6 +21,9 @@ classifiers = [
 dependencies = [
     "httpx>=0.27.0",
     "pydantic>=2.0.0",
+    # Lets pydantic v2 evaluate `X | None` annotations on Python 3.9
+    # (without this, model instantiation raises TypeError at runtime).
+    'eval_type_backport>=0.2; python_version < "3.10"',
 ]
 
 [project.optional-dependencies]

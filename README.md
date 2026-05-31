@@ -10,7 +10,7 @@
 The first Python SDK for [eupago](https://www.eupago.com), Portugal's payment gateway.
 MB WAY, Multibanco, and more — in 5 lines of Python.
 
-**[Documentation (PT/EN)](https://bilouro.github.io/eupago-python/)** | [Examples](examples/) | [API Reference](https://bilouro.github.io/eupago-python/api/)
+**Documentation: [English](https://bilouro.github.io/eupago-python/) · [Português](https://bilouro.github.io/eupago-python/pt/)** | [Examples](examples/) | [API Reference](https://bilouro.github.io/eupago-python/api/)
 
 > **Community SDK** — not affiliated with or endorsed by eupago.
 > For official integrations, visit [eupago.com](https://www.eupago.com/integrations/api-payment-gateway).
@@ -53,12 +53,14 @@ Planned: Direct Debit, Payshop, Cofidis, Floa, PIX, Pagaqui, Paysafecard.
 ## Installation
 
 ```bash
-pip install eupago
+pip install eupago      # or: uv add eupago
 ```
 
-Requires Python 3.9+. Runtime deps: [httpx](https://www.python-httpx.org/)
-and [Pydantic v2](https://docs.pydantic.dev/). Add the `crypto` extra
-(`pip install eupago[crypto]`) only if you receive encrypted webhooks.
+- **PyPI:** <https://pypi.org/project/eupago/>
+- **Python:** 3.9 – 3.13
+- **Dependencies:** [httpx](https://www.python-httpx.org/) and [Pydantic v2](https://docs.pydantic.dev/) — nothing else
+- **Typed:** ships a `py.typed` marker (PEP 561) — full IDE autocomplete and `mypy` support
+- **Optional extras:** `pip install eupago[crypto]` to decrypt AES-256-CBC webhooks; `eupago[e2e]` for Playwright-driven 3DS tests
 
 ## Quick Start
 
