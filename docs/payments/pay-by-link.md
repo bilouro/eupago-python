@@ -124,6 +124,10 @@ Practical consequences:
 
 - If you need to mark the order as abandoned, drive that off your own
   clock — store `expires_at` and treat any link past that time as dead.
+- The expired link itself returns HTTP 200 but the rendered page is a
+  generic "404 — Página não existente" — eupago does **not** show the
+  customer a "link expired" message. Communicate the expiry to the
+  customer yourself before they hit the dead URL.
 - The eupago management endpoint
   `GET /api/management/v1.02/paybylink/details/{id}` exists but requires
   the integer Pay By Link ID (visible in the backoffice URL); the hex

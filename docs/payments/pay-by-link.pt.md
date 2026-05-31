@@ -124,6 +124,10 @@ Consequências práticas:
 - Se precisas marcar a encomenda como abandonada, controla isso pelo
   teu relógio — guarda `expires_at` e trata qualquer link passado como
   morto.
+- O link expirado devolve HTTP 200 mas renderiza uma página genérica
+  "404 — Página não existente" — a eupago **não** mostra ao cliente
+  uma mensagem de "link expirado". Comunica a expiração ao cliente tu
+  próprio antes dele cair na URL morta.
 - O endpoint de management
   `GET /api/management/v1.02/paybylink/details/{id}` existe mas exige o
   ID inteiro do Pay By Link (visível no URL do backoffice); o ID hex
