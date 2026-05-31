@@ -1,8 +1,8 @@
 # eupago Python SDK
 
-[![PyPI version](https://img.shields.io/pypi/v/eupago)](https://pypi.org/project/eupago/)
-[![Python versions](https://img.shields.io/pypi/pyversions/eupago)](https://pypi.org/project/eupago/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bilouro/eupago-python/blob/main/LICENSE)
+[![PyPI version](https://img.shields.io/pypi/v/eupago.svg?style=flat-square)](https://pypi.org/project/eupago/)
+[![Python versions](https://img.shields.io/pypi/pyversions/eupago.svg?style=flat-square)](https://pypi.org/project/eupago/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://github.com/bilouro/eupago-python/blob/main/LICENSE)
 
 The first Python SDK for [eupago](https://www.eupago.com), the Portuguese payment gateway.
 

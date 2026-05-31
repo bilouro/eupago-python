@@ -1,11 +1,11 @@
 # eupago
 
-[![PyPI version](https://img.shields.io/pypi/v/eupago)](https://pypi.org/project/eupago/)
-[![Python versions](https://img.shields.io/pypi/pyversions/eupago)](https://pypi.org/project/eupago/)
-[![CI](https://github.com/bilouro/eupago-python/actions/workflows/test.yml/badge.svg)](https://github.com/bilouro/eupago-python/actions/workflows/test.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Typed](https://img.shields.io/badge/typed-mypy--strict-blue)](https://mypy.readthedocs.io/)
-[![Docs](https://img.shields.io/badge/docs-bilouro.github.io-blue)](https://bilouro.github.io/eupago-python/)
+[![PyPI version](https://img.shields.io/pypi/v/eupago.svg?style=flat-square)](https://pypi.org/project/eupago/)
+[![Python versions](https://img.shields.io/pypi/pyversions/eupago.svg?style=flat-square)](https://pypi.org/project/eupago/)
+[![CI](https://img.shields.io/github/actions/workflow/status/bilouro/eupago-python/test.yml?branch=main&style=flat-square&label=CI)](https://github.com/bilouro/eupago-python/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Typed](https://img.shields.io/badge/typed-mypy--strict-blue.svg?style=flat-square)](https://mypy.readthedocs.io/)
+[![Docs](https://img.shields.io/badge/docs-bilouro.github.io-blue.svg?style=flat-square)](https://bilouro.github.io/eupago-python/)
 
 The first Python SDK for [eupago](https://www.eupago.com), Portugal's payment gateway.
 MB WAY, Multibanco, and more — in 5 lines of Python.
