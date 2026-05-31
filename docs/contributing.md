@@ -56,7 +56,7 @@ All checks must pass before each commit:
 
 ## How to add a new payment method
 
-The SDK follows a consistent pattern for each payment method. Refer to the `CLAUDE.md` file at the project root for detailed instructions, including:
+The SDK follows a consistent pattern for each payment method:
 
 1. Create the service file in `src/eupago/services/`
 2. Follow `mbway.py` as the reference implementation
@@ -64,7 +64,7 @@ The SDK follows a consistent pattern for each payment method. Refer to the `CLAU
 4. Add tests in `tests/unit/`
 5. Update `services/__init__.py`
 
-`CLAUDE.md` also contains the unified vocabulary table (SDK field names vs eupago API names) and all development rules.
+Each service normalizes the eupago API field names (which differ across endpoint generations) into a single English vocabulary — match the existing services for consistency.
 
 ## Pull Requests
 

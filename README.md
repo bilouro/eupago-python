@@ -48,8 +48,7 @@ refunds settle async (`"Pendente"` → `"Reembolsado"` later via webhook). Pay B
 Link expiry is **silent** — no webhook, link becomes a generic 404 page; track
 `expires_at` yourself.
 
-Planned (see [roadmap in CLAUDE.md](CLAUDE.md)): Direct Debit, Payshop, Cofidis,
-Floa, PIX, Pagaqui, Paysafecard.
+Planned: Direct Debit, Payshop, Cofidis, Floa, PIX, Pagaqui, Paysafecard.
 
 ## Installation
 

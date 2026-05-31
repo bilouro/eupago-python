@@ -56,7 +56,7 @@ Todos os checks devem passar antes de cada commit:
 
 ## Como adicionar um novo metodo de pagamento
 
-O SDK segue um padrao consistente para cada metodo de pagamento. Consulta o ficheiro `CLAUDE.md` na raiz do projecto para instrucoes detalhadas, incluindo:
+O SDK segue um padrao consistente para cada metodo de pagamento:
 
 1. Criar o ficheiro do servico em `src/eupago/services/`
 2. Seguir o `mbway.py` como implementacao de referencia
@@ -64,7 +64,7 @@ O SDK segue um padrao consistente para cada metodo de pagamento. Consulta o fich
 4. Adicionar testes em `tests/unit/`
 5. Actualizar `services/__init__.py`
 
-O `CLAUDE.md` tambem contem a tabela de vocabulario unificado (nomes de campos do SDK vs nomes da API eupago) e todas as regras de desenvolvimento.
+Cada servico normaliza os nomes da API eupago (que diferem entre geracoes de endpoint) num unico vocabulario ingles — segue os servicos existentes para manter consistencia.
 
 ## Pull Requests
 
