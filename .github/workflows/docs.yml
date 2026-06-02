@@ -8,6 +8,7 @@ on:
       - "src/**"
       - "mkdocs.yml"
       - "mkdocs_hooks.py"
+      - "overrides/**"
       - "pyproject.toml"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
