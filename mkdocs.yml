@@ -1,6 +1,11 @@
 site_name: eupago Python SDK
 site_url: https://bilouro.github.io/eupago-python/
-site_description: Unofficial Python SDK for the eupago payment gateway
+site_description: >-
+  Modern, fully-typed Python SDK for the eupago payment gateway (Portugal):
+  MB WAY, Multibanco, Credit Card, Pay By Link, refunds and webhooks.
+  Sync + async, production-validated.
+site_author: Victor Bilouro
+copyright: Copyright &copy; 2026 Victor Bilouro · MIT
 repo_url: https://github.com/bilouro/eupago-python
 repo_name: bilouro/eupago-python
 edit_uri: edit/main/docs/
@@ -44,6 +49,10 @@ plugins:
       lang:
         - pt
         - en
+  - social:
+      cards_layout_options:
+        background_color: "#3f51b5"
+        color: "#ffffff"
   - i18n:
       docs_structure: suffix
       reconfigure_material: true
@@ -137,5 +146,8 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/bilouro/eupago-python
+      name: Source on GitHub
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/eupago/
+      name: eupago on PyPI
+  generator: false

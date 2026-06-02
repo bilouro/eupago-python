@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-06-02
+
+Metadata + discoverability release. No SDK behaviour changes.
+
+### Improved
+- **PyPI metadata**: longer, keyword-rich `description`; expanded `keywords` (24 entries); added `Intended Audience`, `Natural Language`, `Topic`, `Framework`, and `Pydantic` classifiers; promoted dev-status to *4 - Beta*; added `Source`, `Discussions`, `Releases`, `Funding`, and a Portuguese-docs URL to `project.urls`; added author/maintainer email.
+- **README**: rewrote the lede with the SDK's positioning and value props so the Google snippet pulls a useful summary instead of a one-liner.
+- **mkdocs SEO**: enabled the Material **social** plugin (auto-generates Open Graph cards per page), added a long `site_description`, `site_author`, `copyright`. JSON-LD `SoftwareApplication` structured data added to the EN and PT landing pages. Added a `robots.txt` pointing at the sitemap.
+- **GitHub repo**: added 15 topics (python, payments, mbway, multibanco, portugal, eupago, sdk, payment-gateway, fintech, api-client, pay-by-link, webhook, async, typed, stripe-alternative) and a longer repo description so the GitHub card itself ranks.
+- Added `.github/FUNDING.yml` so the Sponsor button shows up.
+
 ## [0.5.1] - 2026-05-31
 
 ### Fixed

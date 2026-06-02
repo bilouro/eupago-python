@@ -7,8 +7,17 @@
 [![Typed](https://img.shields.io/badge/typed-mypy--strict-blue.svg?style=flat-square)](https://mypy.readthedocs.io/)
 [![Docs](https://img.shields.io/badge/docs-bilouro.github.io-blue.svg?style=flat-square)](https://bilouro.github.io/eupago-python/)
 
-The first Python SDK for [eupago](https://www.eupago.com), Portugal's payment gateway.
-MB WAY, Multibanco, and more — in 5 lines of Python.
+**eupago for Python** — accept MB WAY, Multibanco, credit-card and Pay By Link
+payments in Portugal with a modern, fully-typed Python SDK. The first
+community SDK for [eupago](https://www.eupago.com), Portugal's leading
+payment gateway. Production-validated: every payment method here has been
+exercised against a live eupago channel with real money.
+
+Built like the Stripe SDK should look in Python: sync + async on the same
+client, `Decimal` for money (never float), HMAC-verified webhooks (cleartext
+and AES-256-CBC encrypted), automatic retries on GETs (POSTs never retry —
+no idempotency = duplicate payments), and a unified vocabulary that hides
+eupago's two API generations behind one clean interface.
 
 **Documentation: [English](https://bilouro.github.io/eupago-python/) · [Português](https://bilouro.github.io/eupago-python/pt/)** | [Examples](examples/) | [API Reference](https://bilouro.github.io/eupago-python/api/)
 

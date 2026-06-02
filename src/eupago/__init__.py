@@ -17,7 +17,7 @@ from eupago.exceptions import (
 )
 from eupago.models import Customer, PaymentResult, PaymentStatus, WebhookEvent
 
-__version__ = "0.5.1"
+__version__ = "0.5.2"
 
 __all__ = [
     "ApiError",

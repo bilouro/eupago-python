@@ -1,16 +1,57 @@
 [project]
 name = "eupago"
-version = "0.5.1"
-description = "Unofficial Python SDK for the eupago payment gateway"
+version = "0.5.2"
+description = "Modern, fully-typed Python SDK for the eupago payment gateway (Portugal): MB WAY, Multibanco, Credit Card, Pay By Link, refunds and webhooks — sync + async, production-validated."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-keywords = ["eupago", "payments", "multibanco", "mbway", "portugal"]
-authors = [{ name = "Victor Bilouro" }]
+keywords = [
+    "eupago",
+    "eupago-python",
+    "eupago-sdk",
+    "payments",
+    "payment-gateway",
+    "portugal",
+    "portuguese",
+    "mbway",
+    "mb-way",
+    "multibanco",
+    "credit-card",
+    "pay-by-link",
+    "paybylink",
+    "webhook",
+    "refund",
+    "stripe-alternative",
+    "fintech",
+    "async",
+    "asyncio",
+    "httpx",
+    "pydantic",
+    "typed",
+    "sdk",
+    "api-client",
+]
+authors = [{ name = "Victor Bilouro", email = "consulting@bilouro.com" }]
+maintainers = [{ name = "Victor Bilouro", email = "consulting@bilouro.com" }]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Information Technology",
     "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Natural Language :: Portuguese",
+    "Operating System :: OS Independent",
     "Topic :: Office/Business :: Financial",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP",
+    "Framework :: AsyncIO",
+    "Framework :: Pydantic",
+    "Framework :: Pydantic :: 2",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -44,13 +85,22 @@ dev = [
     "bandit>=1.7",
     "cryptography>=42.0",
 ]
-docs = ["mkdocs-material", "mkdocstrings[python]", "mkdocs-static-i18n"]
+docs = [
+    "mkdocs-material[imaging]",
+    "mkdocstrings[python]",
+    "mkdocs-static-i18n",
+]
 
 [project.urls]
 Homepage = "https://github.com/bilouro/eupago-python"
 Documentation = "https://bilouro.github.io/eupago-python/"
+"Documentation (Português)" = "https://bilouro.github.io/eupago-python/pt/"
+Source = "https://github.com/bilouro/eupago-python"
 Issues = "https://github.com/bilouro/eupago-python/issues"
+Discussions = "https://github.com/bilouro/eupago-python/discussions"
 Changelog = "https://github.com/bilouro/eupago-python/blob/main/CHANGELOG.md"
+Releases = "https://github.com/bilouro/eupago-python/releases"
+Funding = "https://github.com/sponsors/bilouro"
 
 [build-system]
 requires = ["hatchling"]

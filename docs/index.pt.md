@@ -1,10 +1,36 @@
 # eupago Python SDK
 
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "eupago Python SDK",
+  "alternateName": ["eupago-python", "SDK eupago para Python"],
+  "applicationCategory": "DeveloperApplication",
+  "applicationSubCategory": "Payment Gateway SDK",
+  "operatingSystem": "Cross-platform",
+  "programmingLanguage": "Python",
+  "softwareVersion": "0.5.2",
+  "license": "https://opensource.org/licenses/MIT",
+  "url": "https://bilouro.github.io/eupago-python/pt/",
+  "downloadUrl": "https://pypi.org/project/eupago/",
+  "codeRepository": "https://github.com/bilouro/eupago-python",
+  "description": "SDK Python moderno e totalmente tipado para a eupago (Portugal): MB WAY, Multibanco, Cartão de Crédito, Pay By Link, reembolsos e webhooks. Sync + async, validado em produção.",
+  "inLanguage": "pt-PT",
+  "author": {
+    "@type": "Person",
+    "name": "Victor Bilouro",
+    "url": "https://github.com/bilouro"
+  },
+  "keywords": "eupago, Python, SDK, MB WAY, Multibanco, pagamentos, gateway de pagamento, Portugal, Pay By Link, reembolso, webhook"
+}
+</script>
+
 [![PyPI version](https://img.shields.io/pypi/v/eupago.svg?style=flat-square)](https://pypi.org/project/eupago/)
 [![Python versions](https://img.shields.io/pypi/pyversions/eupago.svg?style=flat-square)](https://pypi.org/project/eupago/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://github.com/bilouro/eupago-python/blob/main/LICENSE)
 
-O primeiro SDK Python para a [eupago](https://www.eupago.com), o gateway de pagamentos português.
+O primeiro SDK Python para a [eupago](https://www.eupago.com), o gateway de pagamentos português. Aceita pagamentos **MB WAY**, **Multibanco**, **Cartão de Crédito** e **Pay By Link**, emite reembolsos e verifica webhooks — sync e async, totalmente tipado, validado em produção.
 
 !!! warning "SDK da comunidade"
     Este é um projecto open-source independente, não afiliado nem endossado pela eupago.

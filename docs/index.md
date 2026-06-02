@@ -1,10 +1,35 @@
 # eupago Python SDK
 
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "eupago Python SDK",
+  "alternateName": ["eupago-python", "eupago for Python"],
+  "applicationCategory": "DeveloperApplication",
+  "applicationSubCategory": "Payment Gateway SDK",
+  "operatingSystem": "Cross-platform",
+  "programmingLanguage": "Python",
+  "softwareVersion": "0.5.2",
+  "license": "https://opensource.org/licenses/MIT",
+  "url": "https://bilouro.github.io/eupago-python/",
+  "downloadUrl": "https://pypi.org/project/eupago/",
+  "codeRepository": "https://github.com/bilouro/eupago-python",
+  "description": "Modern, fully-typed Python SDK for the eupago payment gateway (Portugal): MB WAY, Multibanco, Credit Card, Pay By Link, refunds and webhooks. Sync + async, production-validated.",
+  "author": {
+    "@type": "Person",
+    "name": "Victor Bilouro",
+    "url": "https://github.com/bilouro"
+  },
+  "keywords": "eupago, Python, SDK, MB WAY, Multibanco, payments, payment gateway, Portugal, fintech, Pay By Link, refund, webhook, async"
+}
+</script>
+
 [![PyPI version](https://img.shields.io/pypi/v/eupago.svg?style=flat-square)](https://pypi.org/project/eupago/)
 [![Python versions](https://img.shields.io/pypi/pyversions/eupago.svg?style=flat-square)](https://pypi.org/project/eupago/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://github.com/bilouro/eupago-python/blob/main/LICENSE)
 
-The first Python SDK for [eupago](https://www.eupago.com), the Portuguese payment gateway.
+The first Python SDK for [eupago](https://www.eupago.com), the Portuguese payment gateway. Accept **MB WAY**, **Multibanco**, **Credit Card** and **Pay By Link** payments, issue refunds and verify webhooks — sync and async, fully typed, production-validated.
 
 !!! warning "Community SDK"
     This is an independent open-source project, not affiliated with or endorsed by eupago.

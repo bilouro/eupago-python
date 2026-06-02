@@ -35,3 +35,6 @@ site/
 eupago-duvidas.md
 *.local.md
 CLAUDE.*
+
+# mkdocs-material social plugin generates these per-build
+.cache/
