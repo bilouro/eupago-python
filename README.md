@@ -19,7 +19,7 @@ and AES-256-CBC encrypted), automatic retries on GETs (POSTs never retry —
 no idempotency = duplicate payments), and a unified vocabulary that hides
 eupago's two API generations behind one clean interface.
 
-📖 Documentation: <https://bilouro.github.io/eupago-python/> · English
+📖 Documentation: <https://bilouro.github.io/eupago-python/> · English<br>
 📖 Documentation: <https://bilouro.github.io/eupago-python/pt> · Português
 
 [Examples](examples/) · [API Reference](https://bilouro.github.io/eupago-python/api/)
