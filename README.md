@@ -19,7 +19,10 @@ and AES-256-CBC encrypted), automatic retries on GETs (POSTs never retry —
 no idempotency = duplicate payments), and a unified vocabulary that hides
 eupago's two API generations behind one clean interface.
 
-**Documentation: [English](https://bilouro.github.io/eupago-python/) · [Português](https://bilouro.github.io/eupago-python/pt/)** | [Examples](examples/) | [API Reference](https://bilouro.github.io/eupago-python/api/)
+📖 Documentation: <https://bilouro.github.io/eupago-python/> · English
+📖 Documentation: <https://bilouro.github.io/eupago-python/pt> · Português
+
+[Examples](examples/) · [API Reference](https://bilouro.github.io/eupago-python/api/)
 
 > **Community SDK** — not affiliated with or endorsed by eupago.
 > For official integrations, visit [eupago.com](https://www.eupago.com/integrations/api-payment-gateway).
