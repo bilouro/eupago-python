@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://bilouro.github.io/eupago-python/sitemap.xml
+Sitemap: https://eupago.bilouro.com/sitemap.xml

@@ -12,7 +12,7 @@
   "programmingLanguage": "Python",
   "softwareVersion": "0.5.2",
   "license": "https://opensource.org/licenses/MIT",
-  "url": "https://bilouro.github.io/eupago-python/",
+  "url": "https://eupago.bilouro.com/",
   "downloadUrl": "https://pypi.org/project/eupago/",
   "codeRepository": "https://github.com/bilouro/eupago-python",
   "description": "Modern, fully-typed Python SDK for the eupago payment gateway (Portugal): MB WAY, Multibanco, Credit Card, Pay By Link, refunds and webhooks. Sync + async, production-validated.",

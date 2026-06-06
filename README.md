@@ -5,7 +5,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/bilouro/eupago-python/test.yml?branch=main&style=flat-square&label=CI)](https://github.com/bilouro/eupago-python/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Typed](https://img.shields.io/badge/typed-mypy--strict-blue.svg?style=flat-square)](https://mypy.readthedocs.io/)
-[![Docs](https://img.shields.io/badge/docs-bilouro.github.io-blue.svg?style=flat-square)](https://bilouro.github.io/eupago-python/)
+[![Docs](https://img.shields.io/badge/docs-eupago.bilouro.com-blue.svg?style=flat-square)](https://eupago.bilouro.com/)
 
 **eupago for Python** — accept MB WAY, Multibanco, credit-card and Pay By Link
 payments in Portugal with a modern, fully-typed Python SDK. The first
@@ -19,10 +19,10 @@ and AES-256-CBC encrypted), automatic retries on GETs (POSTs never retry —
 no idempotency = duplicate payments), and a unified vocabulary that hides
 eupago's two API generations behind one clean interface.
 
-📖 Documentation: <https://bilouro.github.io/eupago-python/> · English<br>
-📖 Documentation: <https://bilouro.github.io/eupago-python/pt> · Português
+📖 Documentation: <https://eupago.bilouro.com/> · English<br>
+📖 Documentation: <https://eupago.bilouro.com/pt> · Português
 
-[Examples](examples/) · [API Reference](https://bilouro.github.io/eupago-python/api/)
+[Examples](examples/) · [API Reference](https://eupago.bilouro.com/api/)
 
 > **Community SDK** — not affiliated with or endorsed by eupago.
 > For official integrations, visit [eupago.com](https://www.eupago.com/integrations/api-payment-gateway).

@@ -93,8 +93,8 @@ docs = [
 
 [project.urls]
 Homepage = "https://github.com/bilouro/eupago-python"
-Documentation = "https://bilouro.github.io/eupago-python/"
-"Documentation (Português)" = "https://bilouro.github.io/eupago-python/pt/"
+Documentation = "https://eupago.bilouro.com/"
+"Documentation (Português)" = "https://eupago.bilouro.com/pt/"
 Source = "https://github.com/bilouro/eupago-python"
 Issues = "https://github.com/bilouro/eupago-python/issues"
 Discussions = "https://github.com/bilouro/eupago-python/discussions"
