@@ -10,7 +10,7 @@
   "applicationSubCategory": "Payment Gateway SDK",
   "operatingSystem": "Cross-platform",
   "programmingLanguage": "Python",
-  "softwareVersion": "0.5.2",
+  "softwareVersion": "0.5.3",
   "license": "https://opensource.org/licenses/MIT",
   "url": "https://eupago.bilouro.com/",
   "downloadUrl": "https://pypi.org/project/eupago/",

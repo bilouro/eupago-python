@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-06-06
+
+Metadata-only release that points the public links to the new
+canonical home, `https://eupago.bilouro.com/`. The docs site
+itself moved off `bilouro.github.io/eupago-python/` (custom
+domain `eupago.bilouro.com`) to bypass a known GitHub Pages
+limitation: project sites under `*.github.io` are systematically
+rejected by Google Search Console's sitemap fetcher (see
+[squidfunk/mkdocs-material#7478](https://github.com/squidfunk/mkdocs-material/discussions/7478)
+and [GitHub community#149884](https://github.com/orgs/community/discussions/149884)).
+Custom domain resolves it.
+
+### Changed
+- `project.urls.Documentation` and `Documentation (Português)` now point to `https://eupago.bilouro.com/` (and `/pt/`).
+- README docs badge + lede links migrated to the new domain.
+- All in-repo references updated; old `bilouro.github.io/eupago-python/*` URLs continue to work via GitHub's built-in 301 to the canonical host, so existing bookmarks don't break.
+
+No SDK behaviour change.
+
 ## [0.5.2] - 2026-06-02
 
 Metadata + discoverability release. No SDK behaviour changes.
