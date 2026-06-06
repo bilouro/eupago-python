@@ -38,6 +38,11 @@ jobs:
       # reads the sitemap through Jekyll's wrapper and GSC reports
       # "Couldn't fetch" even though the file is served correctly.
       - run: touch site/.nojekyll
+      # CNAME for the custom domain — GitHub Pages reads this file at the
+      # site root to bind the deployment to the configured custom domain.
+      # Solves the GSC "Couldn't fetch sitemap" problem inherent to project
+      # sites under github.io (shared subdomain, crawl-budget penalties).
+      - run: echo "eupago.bilouro.com" > site/CNAME
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
