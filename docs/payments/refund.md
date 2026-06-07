@@ -44,13 +44,20 @@ backoffice).
 ## Getting the OAuth credentials
 
 The refund endpoint requires `client_id` + `client_secret`, **not** the
-regular API Key:
+regular API Key. As of 2026-06, these are **self-service in the
+backoffice** (eupago changed their process):
 
-- These are **not self-service in the backoffice**.
-- They are issued by **eupago support on request** (open a ticket via
-  [customer.support.eupago.com](https://customer.support.eupago.com/) or
-  email `suporte@eupago.pt`).
-- The same pair gates every `/api/management/...` endpoint.
+1. Log into `clientes.eupago.pt`
+2. Top-right user menu → **A Minha Conta** → tab **Credenciais**
+3. Click **"+ Criar Credenciais"**, name them, **Gerar**
+4. **Save the Client Secret immediately** — it's only shown once. The
+   Client ID can be re-fetched any time.
+
+Credentials expire in **1 year** and can be revoked at any time from the
+same panel. They are **per user**, not per channel — the same pair gates
+every `/api/management/...` endpoint on every channel you own.
+
+Live-verified in production on 2026-06-07.
 
 Once you have them, configure the client once:
 

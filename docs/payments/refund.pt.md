@@ -43,13 +43,21 @@ reembolso parte de fora do teu SDK (ex: admin no backoffice).
 ## Obter as credenciais OAuth
 
 O endpoint de reembolso requer `client_id` + `client_secret`, **não** a
-API Key normal:
+API Key normal. Desde 2026-06 estas credenciais são **self-service no
+backoffice** (a eupago mudou o processo):
 
-- **Não estão disponíveis self-service no backoffice.**
-- São emitidas pelo **suporte eupago a pedido** (abre um ticket em
-  [customer.support.eupago.com](https://customer.support.eupago.com/) ou
-  envia email para `suporte@eupago.pt`).
-- O mesmo par autoriza qualquer endpoint `/api/management/...`.
+1. Login em `clientes.eupago.pt`
+2. Menu de utilizador (canto superior direito) → **A Minha Conta** → separador **Credenciais**
+3. Clica em **"+ Criar Credenciais"**, dá-lhes nome, **Gerar**
+4. **Guarda o Client Secret imediatamente** — só é mostrado uma vez. O
+   Client ID pode ser reconsultado quando quiseres.
+
+As credenciais expiram em **1 ano** e podem ser revogadas a qualquer
+momento no mesmo painel. São **por utilizador**, não por canal — o
+mesmo par autoriza qualquer endpoint `/api/management/...` em qualquer
+canal teu.
+
+Verificado em produção a 2026-06-07.
 
 Quando as tiveres, configura o client uma vez:
 

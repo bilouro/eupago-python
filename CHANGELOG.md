@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Validated
+- **OAuth flow live-verified in production** (2026-06-07). eupago now issues `client_id` / `client_secret` self-service in the backoffice ("A Minha Conta" → "Credenciais" → "+ Criar Credenciais"). The SDK's existing `EupagoClient(client_id=..., client_secret=...)` path works against the live `/api/auth/token` endpoint without changes — `client.refunds.get()` and `client.credit_card.list_subscriptions()` were exercised end-to-end with a real OAuth token (1h JWT). The `management_bearer` escape hatch (backoffice login Bearer) remains supported as a fallback. Docs (`payments/refund.{,pt}.md`) updated to reflect that OAuth is now self-service.
+
 ## [0.5.3] - 2026-06-06
 
 Metadata-only release that points the public links to the new
