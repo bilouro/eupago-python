@@ -34,7 +34,9 @@ def on_post_build(config: Any, **kwargs: Any) -> None:
         return
 
     ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-    tree = ET.parse(src)
+    # We're parsing the sitemap mkdocs itself just wrote on this same machine,
+    # not untrusted input — XXE is not a concern here.
+    tree = ET.parse(src)  # noqa: S314
     root = tree.getroot()
 
     lines = [
