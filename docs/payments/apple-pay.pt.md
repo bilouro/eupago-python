@@ -53,6 +53,16 @@ Sandbox: pede ao suporte do eupago para activar Apple Pay no canal demo
 separado aprovado pelo compliance do eupago — ver
 [o artigo Apple Pay / Google Pay do eupago](https://customer.support.eupago.com/servicedesk/customer/portal/2/article/1953857539).
 
+!!! warning "Limitação do sandbox (a 2026-06-12)"
+    Em `sandbox.eupago.pt` a Apple Pay sheet alojada abre e fecha-se
+    de imediato: o endpoint de merchant validation do eupago
+    (`POST /api/extern/applepay/merchant/{id}`) devolve
+    `400 BAD_REQUEST`, e a página aborta a `ApplePaySession` antes
+    de qualquer autenticação na wallet. O `create_payment` →
+    `redirectUrl` funciona; só o handshake da sheet está partido,
+    server-side. Reportado ao eupago. Nenhum cartão é cobrado — a
+    sessão morre antes do Touch ID / Face ID.
+
 ## Fluxo nativo — avançado
 
 Quando queres a Apple Pay sheet inline (sem redirect), conduzes o Apple

@@ -53,6 +53,16 @@ Sandbox: ask eupago support to enable Apple Pay on your demo channel
 adhesion form approved by eupago compliance — see
 [the eupago Google Pay / Apple Pay article](https://customer.support.eupago.com/servicedesk/customer/portal/2/article/1953857539).
 
+!!! warning "Sandbox limitation (as of 2026-06-12)"
+    On `sandbox.eupago.pt` the hosted Apple Pay sheet opens and
+    immediately closes: eupago's merchant-validation endpoint
+    (`POST /api/extern/applepay/merchant/{id}`) returns
+    `400 BAD_REQUEST`, so the page aborts the `ApplePaySession`
+    before any wallet authentication. `create_payment` →
+    `redirectUrl` works fine; only the sheet handshake is broken,
+    server-side. Reported to eupago. No card is ever charged — the
+    session dies before Touch ID / Face ID.
+
 ## Native flow — advanced
 
 When you want the in-page Apple Pay sheet (no redirect), drive Apple Pay

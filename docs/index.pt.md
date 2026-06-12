@@ -60,8 +60,8 @@ print(payment.status)          # PaymentStatus.PENDING
 | **[MB WAY](payments/mbway.md)** | Pagamento via telemóvel com push notification (aprovação em 5 min) | `client.mbway` |
 | **[Multibanco](payments/multibanco.md)** | Referência ATM / homebanking, paga em 1–30 dias | `client.multibanco` |
 | **[Cartão de Crédito](payments/credit-card.md)** | Página alojada com 3D-Secure / OTP — suporta auth+capture e subscrições recorrentes | `client.credit_card` |
-| **[Apple Pay](payments/apple-pay.md)** | Token Apple Wallet para apps iOS e Safari | `client.apple_pay` |
-| **[Google Pay](payments/google-pay.md)** | Token Google Pay para apps Android e Chrome | `client.google_pay` |
+| **[Apple Pay](payments/apple-pay.md)** | Sheet da wallet alojada via redirect (sem conta Apple Developer) — ou token nativo para apps | `client.apple_pay` |
+| **[Google Pay](payments/google-pay.md)** | Sheet da wallet alojada via redirect (sem merchant id) — ou token nativo para apps | `client.google_pay` |
 | **[Pay By Link](payments/pay-by-link.md)** | Um único URL alojado — o cliente escolhe o método (MB WAY, Multibanco, Cartão, Apple/Google Pay, Cofidis…) | `client.pay_by_link` |
 | **[Reembolsos](payments/refund.md)** | Reembolso total ou parcial de qualquer transação paga (OAuth) | `client.refunds` |
 

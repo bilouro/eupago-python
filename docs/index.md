@@ -59,8 +59,8 @@ print(payment.status)          # PaymentStatus.PENDING
 | **[MB WAY](payments/mbway.md)** | Mobile payment via push notification (5 min approval) | `client.mbway` |
 | **[Multibanco](payments/multibanco.md)** | ATM / online-banking reference, paid 1–30 days later | `client.multibanco` |
 | **[Credit Card](payments/credit-card.md)** | Hosted card form with 3D-Secure / OTP — supports auth+capture and recurring subscriptions | `client.credit_card` |
-| **[Apple Pay](payments/apple-pay.md)** | Apple Wallet token for iOS apps and Safari | `client.apple_pay` |
-| **[Google Pay](payments/google-pay.md)** | Google Pay token for Android apps and Chrome | `client.google_pay` |
+| **[Apple Pay](payments/apple-pay.md)** | Hosted wallet sheet via redirect (no Apple Developer account needed) — or native token for apps | `client.apple_pay` |
+| **[Google Pay](payments/google-pay.md)** | Hosted wallet sheet via redirect (no merchant id needed) — or native token for apps | `client.google_pay` |
 | **[Pay By Link](payments/pay-by-link.md)** | Single hosted URL — customer picks the method (MB WAY, Multibanco, Card, Apple/Google Pay, Cofidis…) | `client.pay_by_link` |
 | **[Refunds](payments/refund.md)** | Total or partial refunds for any paid transaction (OAuth) | `client.refunds` |
 
