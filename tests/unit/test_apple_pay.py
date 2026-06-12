@@ -64,13 +64,32 @@ def test_create_payment_sends_header_auth(client: EupagoClient) -> None:
     assert route.calls[0].request.headers["authorization"] == "ApiKey test-0000-0000-0000-0000"
 
 
-def test_create_payment_requires_token(client: EupagoClient) -> None:
-    with pytest.raises(ValidationError, match="apple_pay_token is required"):
-        client.apple_pay.create_payment(
-            order_id="ORD-AP-NOTOK",
-            amount=Decimal("10.00"),
-            apple_pay_token="",
+@respx.mock
+def test_create_payment_hosted_flow_no_token(client: EupagoClient) -> None:
+    route = respx.post(CREATE_URL).mock(
+        return_value=Response(
+            201,
+            json={
+                "transactionStatus": "Success",
+                "transactionID": "txn-hosted-ap",
+                "reference": "306501",
+                "redirectUrl": "https://sandbox.eupago.pt/api/extern/applepay/form/txn-hosted-ap",
+            },
         )
+    )
+
+    result = client.apple_pay.create_payment(
+        order_id="ORD-AP-HOSTED",
+        amount=Decimal("12.34"),
+    )
+
+    body = json.loads(route.calls[0].request.content)
+    assert "applePayToken" not in body["payment"]
+    assert body["payment"]["identifier"] == "ORD-AP-HOSTED"
+    assert result.payment_url == (
+        "https://sandbox.eupago.pt/api/extern/applepay/form/txn-hosted-ap"
+    )
+    assert result.status == PaymentStatus.PENDING
 
 
 def test_create_payment_validates_max_amount(client: EupagoClient) -> None:

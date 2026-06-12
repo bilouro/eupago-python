@@ -41,11 +41,11 @@ on 2026-05-31 (real money moved + verified back via webhook).
 | `multibanco.create_reference` (sync + async) | ✅ | ✅ | ✅ |
 | `multibanco.get_info` (sync + async) | ✅ | ✅ | — |
 | `credit_card.create_payment` (sync + async, 3DS) | ✅ | ✅ Playwright drives Shift4 + Credorax | — |
-| `credit_card.authorize` / `capture` (sync + async) | ✅ | ⚠️ skip — channel needs *Auth & Capture* | — |
-| `credit_card.create_subscription` / `charge_subscription` (sync + async) | ✅ | ⚠️ partial — channel needs *Subscription* feature | — |
+| `credit_card.authorize` / `capture` (sync + async) | ✅ | ✅ | — |
+| `credit_card.create_subscription` / `charge_subscription` (sync + async) | ✅ | ✅ | — |
 | `credit_card.list_subscriptions` / `get_subscription` / `edit_subscription` / `revoke_subscription` (sync + async) | ✅ | ✅ | — |
-| `apple_pay.create_payment` (sync + async) | ✅ | ❌ needs a real Apple Wallet token | — |
-| `google_pay.create_payment` (sync + async) | ✅ | ❌ needs a real Google Pay token | — |
+| `apple_pay.create_payment` (sync + async) | ✅ | ✅ hosted flow (`redirectUrl`); native token path needs a real Wallet device | — |
+| `google_pay.create_payment` (sync + async) | ✅ | ✅ hosted flow (`redirectUrl`); native token path needs a real Google Pay device | — |
 | `pay_by_link.create_payment` (sync + async) | ✅ | ✅ URL only | ✅ |
 | `refunds.refund` (sync + async) | ✅ | ✅ | ✅ |
 | `refunds.get` (sync + async) | ✅ | ✅ | ✅ |

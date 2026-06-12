@@ -20,7 +20,7 @@ def _is_success(data: dict[str, Any]) -> bool:
 def _build_request_body(
     order_id: str,
     amount: Decimal,
-    google_pay_token: str,
+    google_pay_token: str | None,
     *,
     currency: str = "EUR",
     customer: Customer | None = None,
@@ -33,15 +33,14 @@ def _build_request_body(
 ) -> dict[str, Any]:
     if amount <= 0 or amount > _MAX_AMOUNT:
         raise ValidationError(f"Amount must be between 0.01 and {_MAX_AMOUNT}")
-    if not google_pay_token:
-        raise ValidationError("google_pay_token is required (PaymentData token from Google Pay)")
 
     payment: dict[str, Any] = {
         "amount": {"value": float(amount), "currency": currency},
         "identifier": order_id,
         "lang": language,
-        "googlePayToken": google_pay_token,
     }
+    if google_pay_token:
+        payment["googlePayToken"] = google_pay_token
     if description:
         payment["description"] = description
     if success_url:
@@ -82,20 +81,27 @@ def _parse_response(data: dict[str, Any], order_id: str, amount: Decimal) -> Pay
 class GooglePayService(BaseService):
     """Google Pay payments.
 
-    Google Pay returns a ``PaymentData`` JSON after the user picks a card.
-    The caller forwards the encoded token to ``google_pay_token``; eupago
-    decrypts it server-side and processes the card payment.
+    Two flows are supported:
 
-    Unit-tested only — full live verification requires a real device with
-    Google Pay enabled and the merchant configured in the Google Pay API
-    console. Body shape mirrors the verified credit-card v1.02 contract.
+    - **Hosted (recommended for web):** call ``create_payment`` without
+      ``google_pay_token``. eupago returns a ``redirectUrl`` (exposed as
+      ``PaymentResult.payment_url``) that hosts the Google Pay sheet —
+      redirect the customer's browser there. This is the simplest
+      integration and works without your own Google Pay merchant id
+      (eupago is the merchant).
+    - **Native (mobile / web with own merchant id):** obtain a Google
+      Pay ``PaymentData`` token via the Google Pay JS / Android SDK and
+      pass it as ``google_pay_token``. eupago decrypts it server-side
+      and charges the card directly — no redirect.
+
+    Body shape mirrors the verified credit-card v1.02 contract.
     """
 
     def create_payment(
         self,
         order_id: str,
         amount: Decimal,
-        google_pay_token: str,
+        google_pay_token: str | None = None,
         *,
         currency: str = "EUR",
         customer: Customer | None = None,
@@ -126,7 +132,7 @@ class GooglePayService(BaseService):
         self,
         order_id: str,
         amount: Decimal,
-        google_pay_token: str,
+        google_pay_token: str | None = None,
         *,
         currency: str = "EUR",
         customer: Customer | None = None,

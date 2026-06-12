@@ -1,16 +1,20 @@
 """
 Apple Pay — Pagamento via Apple Wallet.
 
-O Apple Pay devolve um ``PKPaymentToken`` JSON após o utilizador escolher
-o cartão na Wallet (Touch ID / Face ID). O servidor encaminha esse token
-para o eupago, que o desencripta e processa o pagamento do cartão.
+Dois fluxos:
 
-Fluxo:
-  Browser/iOS → Apple Pay sheet → token → POST para o teu servidor
-  → Servidor → create_payment(apple_pay_token=token) → Webhook (PAID/DECLINED)
+**Hospedado (recomendado para web)** — omites o token e o eupago devolve
+um ``payment_url``: rediriges o browser do cliente para lá e é o eupago
+que serve a Apple Pay sheet. Não precisas de conta Apple Developer.
 
-Pré-requisitos: app/site configurado no Apple Developer + domain verification
-do eupago no Apple Pay (ver eupago.atlassian.net/Apple Pay setup).
+**Nativo (apps iOS / web com Merchant ID próprio)** — obténs um
+``PKPaymentToken`` no cliente (Touch ID / Face ID) e encaminha-lo no
+``apple_pay_token``; o eupago desencripta e cobra sem redirect.
+
+Fluxo hospedado:
+  App → create_payment → recebes payment_url
+  → Redirect do browser do cliente → Apple Pay sheet na página eupago
+  → Webhook (PAID/DECLINED)
 """
 
 from decimal import Decimal
@@ -20,25 +24,37 @@ from eupago.models import Customer
 
 client = EupagoClient(api_key="xxxx-xxxx-xxxx-xxxx-xxxx", sandbox=True)
 
-# Token vindo do frontend (PKPaymentToken) — opaco para nós
-apple_pay_token = '{"paymentMethod":"...","paymentData":{"version":"EC_v1",...}}'
-
+# Fluxo hospedado — sem token. O eupago serve a Apple Pay sheet.
 payment = client.apple_pay.create_payment(
     order_id="ORD-AP-2026-001",
     amount=Decimal("39.90"),
-    apple_pay_token=apple_pay_token,
     description="Encomenda #001",
     customer=Customer(email="cliente@email.com"),
+    success_url="https://loja.exemplo/checkout/ok",
+    error_url="https://loja.exemplo/checkout/fail",
 )
 
 print(f"Transaction ID: {payment.transaction_id}")
-print(f"Status:         {payment.status}")  # PENDING ou PAID
+print(f"Redirect to:    {payment.payment_url}")  # envia o browser para aqui
 # Confirmação final via webhook
+
+
+# --- Fluxo nativo (avançado) ---
+#
+# Requer Apple Developer Merchant ID + domain verification. O token vem do
+# frontend (window.ApplePaySession / PassKit) e é opaco para o SDK:
+#
+# apple_pay_token = '{"paymentMethod":"...","paymentData":{"version":"EC_v1",...}}'
+# payment = client.apple_pay.create_payment(
+#     order_id="ORD-AP-2026-002",
+#     amount=Decimal("39.90"),
+#     apple_pay_token=apple_pay_token,
+# )
 
 
 # --- Reembolso ---
 #
 # refund = client.refunds.refund(
 #     transaction_id=payment.transaction_id,
-#     value=Decimal("39.90"),
+#     amount=Decimal("39.90"),
 # )

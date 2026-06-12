@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Apple Pay / Google Pay hosted flow.** `client.apple_pay.create_payment` and `client.google_pay.create_payment` now accept the wallet token as **optional**. When omitted, eupago serves the wallet sheet itself and returns a `redirectUrl` (surfaced as `PaymentResult.payment_url`) that you redirect the customer's browser to — no Apple Developer account / Google Pay merchant id required on your side, eupago is the merchant. The native flow (caller-supplied `PKPaymentToken` / `PaymentData`) continues to work unchanged. Live-verified on the sandbox demo channel (2026-06-12).
+
 ### Validated
 - **OAuth flow live-verified in production** (2026-06-07). eupago now issues `client_id` / `client_secret` self-service in the backoffice ("A Minha Conta" → "Credenciais" → "+ Criar Credenciais"). The SDK's existing `EupagoClient(client_id=..., client_secret=...)` path works against the live `/api/auth/token` endpoint without changes — `client.refunds.get()` and `client.credit_card.list_subscriptions()` were exercised end-to-end with a real OAuth token (1h JWT). The `management_bearer` escape hatch (backoffice login Bearer) remains supported as a fallback. Docs (`payments/refund.{,pt}.md`) updated to reflect that OAuth is now self-service.
 

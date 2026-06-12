@@ -20,7 +20,7 @@ def _is_success(data: dict[str, Any]) -> bool:
 def _build_request_body(
     order_id: str,
     amount: Decimal,
-    apple_pay_token: str,
+    apple_pay_token: str | None,
     *,
     currency: str = "EUR",
     customer: Customer | None = None,
@@ -33,15 +33,14 @@ def _build_request_body(
 ) -> dict[str, Any]:
     if amount <= 0 or amount > _MAX_AMOUNT:
         raise ValidationError(f"Amount must be between 0.01 and {_MAX_AMOUNT}")
-    if not apple_pay_token:
-        raise ValidationError("apple_pay_token is required (PKPaymentToken from Apple Wallet)")
 
     payment: dict[str, Any] = {
         "amount": {"value": float(amount), "currency": currency},
         "identifier": order_id,
         "lang": language,
-        "applePayToken": apple_pay_token,
     }
+    if apple_pay_token:
+        payment["applePayToken"] = apple_pay_token
     if description:
         payment["description"] = description
     if success_url:
@@ -82,23 +81,28 @@ def _parse_response(data: dict[str, Any], order_id: str, amount: Decimal) -> Pay
 class ApplePayService(BaseService):
     """Apple Pay payments.
 
-    The wallet returns a ``PKPaymentToken`` after the user authenticates
-    (Touch ID / Face ID). The caller forwards that token (typically as a
-    JSON string or base64 payload, depending on Apple's wallet
-    configuration) to ``apple_pay_token``; eupago decrypts it server-side
-    and processes the card payment.
+    Two flows are supported:
 
-    Unit-tested only — full live verification requires a real device with
-    an Apple Wallet card. Body shape mirrors the verified credit-card v1.02
-    contract; the ``applePayToken`` field name follows eupago's naming
-    convention.
+    - **Hosted (recommended for web):** call ``create_payment`` without
+      ``apple_pay_token``. eupago returns a ``redirectUrl`` (exposed as
+      ``PaymentResult.payment_url``) that hosts the Apple Pay sheet —
+      redirect the customer's browser there. This is the simplest
+      integration and works without an Apple Developer Program account
+      on your side (eupago is the merchant).
+    - **Native (mobile / web with own merchant id):** obtain a
+      ``PKPaymentToken`` via the Apple Pay JS / iOS SDK and pass it as
+      ``apple_pay_token``. eupago decrypts it server-side and charges
+      the card directly — no redirect.
+
+    Body shape mirrors the verified credit-card v1.02 contract; the
+    ``applePayToken`` field name follows eupago's naming convention.
     """
 
     def create_payment(
         self,
         order_id: str,
         amount: Decimal,
-        apple_pay_token: str,
+        apple_pay_token: str | None = None,
         *,
         currency: str = "EUR",
         customer: Customer | None = None,
@@ -129,7 +133,7 @@ class ApplePayService(BaseService):
         self,
         order_id: str,
         amount: Decimal,
-        apple_pay_token: str,
+        apple_pay_token: str | None = None,
         *,
         currency: str = "EUR",
         customer: Customer | None = None,

@@ -62,12 +62,40 @@ def test_create_payment_sends_header_auth(client: EupagoClient) -> None:
     assert route.calls[0].request.headers["authorization"] == "ApiKey test-0000-0000-0000-0000"
 
 
-def test_create_payment_requires_token(client: EupagoClient) -> None:
-    with pytest.raises(ValidationError, match="google_pay_token is required"):
+@respx.mock
+def test_create_payment_hosted_flow_no_token(client: EupagoClient) -> None:
+    route = respx.post(CREATE_URL).mock(
+        return_value=Response(
+            201,
+            json={
+                "transactionStatus": "Success",
+                "transactionID": "txn-hosted-gp",
+                "reference": "306601",
+                "redirectUrl": "https://sandbox.eupago.pt/api/extern/googlepay/form/txn-hosted-gp",
+            },
+        )
+    )
+
+    result = client.google_pay.create_payment(
+        order_id="ORD-GP-HOSTED",
+        amount=Decimal("12.34"),
+    )
+
+    body = json.loads(route.calls[0].request.content)
+    assert "googlePayToken" not in body["payment"]
+    assert body["payment"]["identifier"] == "ORD-GP-HOSTED"
+    assert result.payment_url == (
+        "https://sandbox.eupago.pt/api/extern/googlepay/form/txn-hosted-gp"
+    )
+    assert result.status == PaymentStatus.PENDING
+
+
+def test_create_payment_validates_max_amount(client: EupagoClient) -> None:
+    with pytest.raises(ValidationError, match="Amount must be between"):
         client.google_pay.create_payment(
-            order_id="ORD-GP-NOTOK",
-            amount=Decimal("10.00"),
-            google_pay_token="",
+            order_id="ORD-GP-MAX",
+            amount=Decimal("100000"),
+            google_pay_token=_FAKE_TOKEN,
         )
 
 
