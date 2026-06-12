@@ -44,8 +44,8 @@ on 2026-05-31 (real money moved + verified back via webhook).
 | `credit_card.authorize` / `capture` (sync + async) | ✅ | ✅ | — |
 | `credit_card.create_subscription` / `charge_subscription` (sync + async) | ✅ | ✅ | — |
 | `credit_card.list_subscriptions` / `get_subscription` / `edit_subscription` / `revoke_subscription` (sync + async) | ✅ | ✅ | — |
-| `apple_pay.create_payment` (sync + async) | ✅ | ✅ hosted flow (`redirectUrl`); native token path needs a real Wallet device | — |
-| `google_pay.create_payment` (sync + async) | ✅ | ✅ hosted flow (`redirectUrl`); native token path needs a real Google Pay device | — |
+| `apple_pay.create_payment` (sync + async) | ✅ | ✅ create → `redirectUrl`; ⚠️ hosted sheet aborts — sandbox merchant validation returns 400 (reported to eupago) | — |
+| `google_pay.create_payment` (sync + async) | ✅ | ✅ full E2E — hosted sheet completed in a real browser, webhook PAID | — |
 | `pay_by_link.create_payment` (sync + async) | ✅ | ✅ URL only | ✅ |
 | `refunds.refund` (sync + async) | ✅ | ✅ | ✅ |
 | `refunds.get` (sync + async) | ✅ | ✅ | ✅ |
