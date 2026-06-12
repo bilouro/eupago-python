@@ -6,6 +6,22 @@ Complete integration guides for popular Python frameworks. Each recipe includes:
 - Webhook handler (v2.0 POST + v1.0 GET)
 - Security best practices
 
+## Architecture
+
+<div class="grid cards" markdown>
+
+-   :material-database:{ .lg .middle } **Persisting payments**
+
+    ---
+
+    The reference schema and state machine for storing payments:
+    write-ahead inserts, idempotent webhooks, refund linkage, and the
+    Pay By Link gotchas — PostgreSQL + DynamoDB.
+
+    [:octicons-arrow-right-24: Persisting payments](persisting-payments.md)
+
+</div>
+
 ## Available frameworks
 
 <div class="grid cards" markdown>

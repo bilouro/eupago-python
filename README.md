@@ -163,6 +163,16 @@ print(event.method)     # "mbway"
 The module-level `eupago.webhooks.parse_webhook(...)` is still available as
 an escape hatch for multi-channel cases that need to pick a secret per call.
 
+## Storing payments
+
+Don't design your payments table from scratch — the
+[**Persisting payments** recipe](https://eupago.bilouro.com/recipes/persisting-payments/)
+has the reference schema (PostgreSQL + DynamoDB), the state machine, and the
+four functions that survive crashes, webhook redelivery and the Pay By Link
+quirks. The [**Security guide**](https://eupago.bilouro.com/security/) covers
+the rest: credential blast radius, webhook hardening, PII redaction
+(`eupago.utils.redact_pii`) and why the browser redirect is never a receipt.
+
 ## Error Handling
 
 All errors inherit from `EupagoError` with typed subclasses:

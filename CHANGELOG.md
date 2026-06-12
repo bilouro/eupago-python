@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`eupago.utils.redact_pii()`** — public helper that masks phone numbers, emails and NIF in strings or nested dict/list payloads, using the same patterns the SDK applies to its own logs. Built for persisting raw webhook/API payloads without accumulating PII.
+- **"Persisting payments" recipe** (`docs/recipes/persisting-payments.md`, EN+PT) — reference PostgreSQL schema + DynamoDB mapping, lifecycle state machine, write-ahead pattern, idempotent webhook handling, reconciliation job, and the full quirks checklist (Pay By Link method swap & silent expiry, create-vs-webhook id mismatch, refund linkage via `originalTrid`, subscription dual identifiers).
+- **Security guide** (`docs/security.md`, EN+PT) — PCI/SAQ A positioning, credential blast-radius map, webhook endpoint hardening, redirect-is-not-a-receipt, PII redaction + retention, append-only event history.
 - **Apple Pay / Google Pay hosted flow.** `client.apple_pay.create_payment` and `client.google_pay.create_payment` now accept the wallet token as **optional**. When omitted, eupago serves the wallet sheet itself and returns a `redirectUrl` (surfaced as `PaymentResult.payment_url`) that you redirect the customer's browser to — no Apple Developer account / Google Pay merchant id required on your side, eupago is the merchant. The native flow (caller-supplied `PKPaymentToken` / `PaymentData`) continues to work unchanged. Live-verified on the sandbox demo channel (2026-06-12).
 
 ### Validated

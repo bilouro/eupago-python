@@ -109,8 +109,16 @@ cobertos por `client.webhooks.parse(...)` — ver [Webhooks](webhooks/index.md).
 
     ---
 
-    Guias completos para FastAPI, Django, Flask
+    Persistir pagamentos, FastAPI, Django, Flask
 
     [:octicons-arrow-right-24: Receitas](recipes/index.md)
+
+-   :material-shield-lock:{ .lg .middle } **Segurança**
+
+    ---
+
+    Credenciais, webhooks, PII — o que importa de verdade
+
+    [:octicons-arrow-right-24: Guia de segurança](security.md)
 
 </div>

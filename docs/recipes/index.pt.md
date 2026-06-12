@@ -6,6 +6,22 @@ Guias completos de integracao com frameworks Python populares. Cada receita incl
 - Handler de webhook (v2.0 POST + v1.0 GET)
 - Boas praticas de seguranca
 
+## Arquitectura
+
+<div class="grid cards" markdown>
+
+-   :material-database:{ .lg .middle } **Persistir pagamentos**
+
+    ---
+
+    O esquema de referência e a máquina de estados para guardar
+    pagamentos: write-ahead, webhooks idempotentes, linkagem de
+    reembolsos e as armadilhas do Pay By Link — PostgreSQL + DynamoDB.
+
+    [:octicons-arrow-right-24: Persistir pagamentos](persisting-payments.md)
+
+</div>
+
 ## Frameworks disponiveis
 
 <div class="grid cards" markdown>

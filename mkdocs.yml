@@ -81,6 +81,8 @@ plugins:
             Refunds: Reembolsos
             Signature Verification: Verificação de assinatura
             Recipes: Receitas
+            Persisting payments: Persistir pagamentos
+            Security: Segurança
             Errors & Troubleshooting: Erros e Troubleshooting
             API Reference: Referência API
             Contributing: Contribuir
@@ -114,9 +116,11 @@ nav:
     - Signature Verification: webhooks/signature.md
   - Recipes:
     - Recipes: recipes/index.md
+    - Persisting payments: recipes/persisting-payments.md
     - FastAPI: recipes/fastapi.md
     - Django: recipes/django.md
     - Flask: recipes/flask.md
+  - Security: security.md
   - Errors & Troubleshooting: errors/index.md
   - API Reference: api/index.md
   - Contributing: contributing.md

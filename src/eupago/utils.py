@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from typing import Any
+
+from eupago._logging import redact_pii as _redact_text
+
 # Bank-code → BIC lookup for Portuguese IBANs. Used by Multibanco refunds,
 # which require a ``bic`` value in addition to ``iban`` (eupago's API rejects
 # missing / empty / null bic with ``BIC_INVALID`` — confirmed live in
@@ -94,3 +98,35 @@ def bic_for_pt_iban(iban: str) -> str | None:
         return None
     bank_code = cleaned[4:8]
     return _PT_BANK_BIC.get(bank_code)
+
+
+def redact_pii(data: Any) -> Any:
+    """Return a copy of *data* with PII masked (phone numbers, emails, NIF).
+
+    Uses the same patterns the SDK applies to its own log output (R6):
+    9-digit PT phone numbers (with or without ``+351``), email addresses,
+    and NIF-shaped numbers become ``***PHONE***`` / ``***EMAIL***`` /
+    ``***NIF***``.
+
+    Accepts a string, or any combination of dicts / lists / tuples nested
+    inside each other — only string *values* are redacted; keys and
+    non-string scalars (numbers, booleans, ``None``) pass through
+    untouched. The input is never mutated.
+
+    The primary use case is persisting raw webhook / API payloads for
+    audit without building up a store of personal data::
+
+        from eupago.utils import redact_pii
+
+        event_row["raw"] = redact_pii(webhook_body)  # then INSERT
+
+    See the "Persisting payments" recipe in the docs for the full
+    storage pattern.
+    """
+    if isinstance(data, str):
+        return _redact_text(data)
+    if isinstance(data, dict):
+        return {key: redact_pii(value) for key, value in data.items()}
+    if isinstance(data, (list, tuple)):
+        return type(data)(redact_pii(value) for value in data)
+    return data
