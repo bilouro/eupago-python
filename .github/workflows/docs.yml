@@ -13,17 +13,20 @@ on:
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
+# The docs site is hosted on AWS S3 (private) + CloudFront, served at
+# https://eupago.bilouro.com. Deploy is tokenless via GitHub OIDC: the job
+# assumes an IAM role (AWS_DEPLOY_ROLE_ARN) scoped to this repo, syncs the
+# built site to the bucket, and invalidates the CloudFront cache.
 permissions:
   contents: read
-  pages: write
   id-token: write
 
 concurrency:
-  group: pages
+  group: docs-deploy
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,25 +37,18 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libcairo2-dev libfreetype6-dev
       - run: pip install -e ".[docs]"
       - run: mkdocs build --strict
-      # Disable Jekyll processing on GitHub Pages — without this, Googlebot
-      # reads the sitemap through Jekyll's wrapper and GSC reports
-      # "Couldn't fetch" even though the file is served correctly.
-      - run: touch site/.nojekyll
-      # CNAME for the custom domain — GitHub Pages reads this file at the
-      # site root to bind the deployment to the configured custom domain.
-      # Solves the GSC "Couldn't fetch sitemap" problem inherent to project
-      # sites under github.io (shared subdomain, crawl-budget penalties).
-      - run: echo "eupago.bilouro.com" > site/CNAME
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: eu-west-1
+
+      - name: Sync to S3
+        run: aws s3 sync site/ "s3://${{ secrets.DOCS_S3_BUCKET }}/" --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ secrets.DOCS_CF_DISTRIBUTION_ID }}" \
+            --paths "/*"
