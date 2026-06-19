@@ -45,7 +45,9 @@ jobs:
           aws-region: eu-west-1
 
       - name: Sync to S3
-        run: aws s3 sync site/ "s3://${{ secrets.DOCS_S3_BUCKET }}/" --delete
+        # Exclude report/* so the password-protected GoAccess dashboard at
+        # /report/ (published out-of-band) survives the --delete.
+        run: aws s3 sync site/ "s3://${{ secrets.DOCS_S3_BUCKET }}/" --delete --exclude "report/*"
 
       - name: Invalidate CloudFront cache
         run: |
