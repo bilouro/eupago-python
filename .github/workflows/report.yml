@@ -1,0 +1,54 @@
+name: Docs report
+
+# Regenerate the GoAccess access-stats dashboard at
+# https://eupago.bilouro.com/report/ (Basic-Auth protected) from the
+# CloudFront access logs. Runs on a schedule so the dashboard stays fresh
+# without anyone running the local script. Tokenless via GitHub OIDC.
+on:
+  schedule:
+    - cron: "0 6 * * *"   # daily at 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: docs-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install GoAccess
+        run: sudo apt-get update && sudo apt-get install -y goaccess
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: eu-west-1
+
+      - name: Sync CloudFront logs
+        run: |
+          mkdir -p cflogs
+          aws s3 sync "s3://${{ secrets.DOCS_LOGS_BUCKET }}/cf/" cflogs/ --only-show-errors
+
+      - name: Generate GoAccess report
+        run: |
+          if ls cflogs/*.gz >/dev/null 2>&1; then
+            gzip -dc cflogs/*.gz | goaccess - \
+              --log-format=CLOUDFRONT \
+              --html-report-title="eupago.bilouro.com — access stats" \
+              -o report.html
+          else
+            echo "<!doctype html><meta charset=utf-8><title>No data</title><h1>No access logs yet</h1>" > report.html
+          fi
+
+      - name: Publish to /report/ and invalidate
+        run: |
+          aws s3 cp report.html "s3://${{ secrets.DOCS_S3_BUCKET }}/report/index.html" \
+            --content-type "text/html; charset=utf-8" --cache-control "no-cache"
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ secrets.DOCS_CF_DISTRIBUTION_ID }}" --paths "/report/*"
